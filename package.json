@@ -1,0 +1,47 @@
+{
+    "version": "0.26.3",
+    "name": "bosbase",
+    "description": "BosBase JavaScript SDK",
+    "author": "Gani Georgiev",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/bosbase/js-sdk.git"
+    },
+    "exports": {
+        ".": "./dist/bosbase.es.mjs",
+        "./cjs": "./dist/bosbase.cjs.js",
+        "./umd": "./dist/bosbase.umd.js"
+    },
+    "main": "./dist/bosbase.es.mjs",
+    "module": "./dist/bosbase.es.mjs",
+    "react-native": "./dist/bosbase.es.js",
+    "types": "./dist/bosbase.es.d.mts",
+    "keywords": [
+        "bosbase",
+        "bosbase-js",
+        "js-sdk",
+        "javascript-sdk",
+        "bosbase-sdk"
+    ],
+    "prettier": {
+        "tabWidth": 4,
+        "printWidth": 90,
+        "bracketSameLine": true
+    },
+    "scripts": {
+        "format": "npx prettier ./src ./tests --write",
+        "build": "rm -rf dist && rollup -c",
+        "dev": "rollup -c -w",
+        "test": "vitest",
+        "prepublishOnly": "npm run build"
+    },
+    "devDependencies": {
+        "@rollup/plugin-terser": "^0.4.3",
+        "prettier": "3.2.4",
+        "rollup": "^4.0.0",
+        "rollup-plugin-ts": "^3.0.0",
+        "typescript": "^5.1.6",
+        "vitest": "^2.0.0"
+    }
+}
