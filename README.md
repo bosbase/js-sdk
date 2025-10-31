@@ -1,7 +1,7 @@
 BosBase JavaScript SDK
 ======================================================================
 
-Official JavaScript SDK (browser and node) for interacting with the [BosBase API](https://bosbase.io/docs).
+Official JavaScript SDK (browser and node) for interacting with the [BosBase API](https://docs.bosbase.com/docs).
 
 - [Installation](#installation)
 - [Usage](#usage)
@@ -98,7 +98,7 @@ const result = await pb.collection('example').getList(1, 20, {
 
 // and much more...
 ```
-> More detailed API docs and copy-paste examples could be found in the [API documentation for each service](https://bosbase.io/docs/api-records/).
+> More detailed API docs and copy-paste examples could be found in the [API documentation for each service](https://docs.bosbase.com/docs/api-records/).
 
 
 ## Caveats

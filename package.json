@@ -2,7 +2,7 @@
     "version": "0.26.3",
     "name": "bosbase",
     "description": "BosBase JavaScript SDK",
-    "author": "Gani Georgiev",
+    "author": "Bosbase",
     "license": "MIT",
     "repository": {
         "type": "git",
