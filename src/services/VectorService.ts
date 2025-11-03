@@ -223,6 +223,31 @@ export class VectorService extends BaseService {
     }
 
     /**
+     * Update a vector collection configuration (distance metric and options).
+     * Note: Collection name and dimension cannot be changed after creation.
+     *
+     * @example
+     * ```js
+     * await pb.vectors.updateCollection('documents', {
+     *     distance: 'l2'  // Change from cosine to L2
+     * });
+     * ```
+     */
+    async updateCollection(
+        name: string,
+        config?: { distance?: string; options?: Record<string, any> },
+        options?: VectorServiceOptions,
+    ): Promise<void> {
+        const path = `${this.getPath()}/collections/${encodeURIComponent(name)}`;
+
+        await this.client.send(path, {
+            method: "PATCH",
+            body: config || {},
+            ...options,
+        });
+    }
+
+    /**
      * Delete a vector collection/table.
      *
      * @example

@@ -115,6 +115,29 @@ Array<{
 }>
 ```
 
+### Update Collection
+
+Update a vector collection configuration (distance metric and options).
+Note: Collection name and dimension cannot be changed after creation.
+
+```javascript
+await pb.vectors.updateCollection('documents', {
+  distance: 'l2'  // Change from cosine to L2
+});
+
+// Update with options
+await pb.vectors.updateCollection('documents', {
+  distance: 'inner_product',
+  options: { customOption: 'value' }
+});
+```
+
+**Parameters:**
+- `name` (string): Collection name
+- `config` (object, optional):
+  - `distance` (string, optional): Distance metric to update. Options: 'cosine', 'l2', 'inner_product'
+  - `options` (object, optional): Custom collection options
+
 ### Delete Collection
 
 Delete a vector collection and all its data.
