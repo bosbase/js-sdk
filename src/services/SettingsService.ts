@@ -212,6 +212,64 @@ export class SettingsService extends BaseService {
         return this.update({ s3: config }, options);
     }
 
+    // -------------------------------------------------------------------
+    // Storage-Specific Helpers (S3 File Storage)
+    // -------------------------------------------------------------------
+
+    /**
+     * Gets the current S3 storage configuration.
+     * 
+     * This is a convenience method specifically for file storage S3 configuration,
+     * equivalent to calling getCategory("s3").
+     * 
+     * @param options - Optional request options
+     * @returns S3 storage configuration object
+     * @throws {ClientResponseError}
+     */
+    async getStorageS3(options?: CommonOptions): Promise<any> {
+        return this.getCategory("s3", options);
+    }
+
+    /**
+     * Updates the S3 storage configuration for file storage.
+     * 
+     * This is a convenience method specifically for file storage S3 configuration,
+     * equivalent to calling updateS3().
+     * 
+     * @param config - S3 storage configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateStorageS3(
+        config: {
+            enabled?: boolean;
+            bucket?: string;
+            region?: string;
+            endpoint?: string;
+            accessKey?: string;
+            secret?: string;
+            forcePathStyle?: boolean;
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.updateS3(config, options);
+    }
+
+    /**
+     * Tests the S3 storage connection for file storage.
+     * 
+     * This is a convenience method that tests the "storage" filesystem,
+     * equivalent to calling testS3("storage").
+     * 
+     * @param options - Optional request options
+     * @returns true if connection test succeeds
+     * @throws {ClientResponseError}
+     */
+    async testStorageS3(options?: CommonOptions): Promise<boolean> {
+        return this.testS3("storage", options);
+    }
+
     /**
      * Updates the Backups configuration (scheduling and S3 storage).
      * 
