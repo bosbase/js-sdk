@@ -82,7 +82,7 @@ export class VectorService extends BaseService {
         data: VectorBatchInsertOptions,
         options?: VectorServiceOptions,
     ): Promise<VectorBatchInsertResponse> {
-        const path = `${this.getPath(options?.collection)}/batch`;
+        const path = `${this.getPath(options?.collection)}/documents/batch`;
 
         return this.client.send<VectorBatchInsertResponse>(path, {
             method: "POST",
@@ -149,7 +149,7 @@ export class VectorService extends BaseService {
         searchOptions: VectorSearchOptions,
         options?: VectorServiceOptions,
     ): Promise<VectorSearchResponse> {
-        const path = `${this.getPath(options?.collection)}/search`;
+        const path = `${this.getPath(options?.collection)}/documents/search`;
 
         return this.client.send<VectorSearchResponse>(path, {
             method: "POST",
