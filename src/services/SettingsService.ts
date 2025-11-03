@@ -189,6 +189,120 @@ export class SettingsService extends BaseService {
         return this.update({ smtp: config }, options);
     }
 
+    // -------------------------------------------------------------------
+    // Mail-Specific Helpers (SMTP + Sender Info)
+    // -------------------------------------------------------------------
+
+    /**
+     * Gets the current mail settings (both sender info from meta and SMTP configuration).
+     * 
+     * This is a convenience method that returns both the sender information (meta)
+     * and SMTP configuration together, matching what's shown on the mail settings page.
+     * 
+     * @param options - Optional request options
+     * @returns Object containing meta (senderName, senderAddress) and smtp configuration
+     * @throws {ClientResponseError}
+     */
+    async getMailSettings(options?: CommonOptions): Promise<{
+        meta?: {
+            senderName?: string;
+            senderAddress?: string;
+        };
+        smtp?: {
+            enabled?: boolean;
+            host?: string;
+            port?: number;
+            username?: string;
+            password?: string;
+            authMethod?: string;
+            tls?: boolean;
+            localName?: string;
+        };
+    }> {
+        const allSettings = await this.getAll(options);
+        return {
+            meta: {
+                senderName: allSettings.meta?.senderName,
+                senderAddress: allSettings.meta?.senderAddress,
+            },
+            smtp: allSettings.smtp,
+        };
+    }
+
+    /**
+     * Updates mail settings (both sender info and SMTP configuration).
+     * 
+     * This is a convenience method that updates both the sender information (meta)
+     * and SMTP configuration in a single call, matching the mail settings page behavior.
+     * 
+     * @param config - Mail settings updates (can include both sender info and SMTP config)
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateMailSettings(
+        config: {
+            senderName?: string;
+            senderAddress?: string;
+            smtp?: {
+                enabled?: boolean;
+                host?: string;
+                port?: number;
+                username?: string;
+                password?: string;
+                authMethod?: string;
+                tls?: boolean;
+                localName?: string;
+            };
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        const updateBody: { [key: string]: any } = {};
+
+        if (config.senderName !== undefined || config.senderAddress !== undefined) {
+            updateBody.meta = {};
+            if (config.senderName !== undefined) {
+                updateBody.meta.senderName = config.senderName;
+            }
+            if (config.senderAddress !== undefined) {
+                updateBody.meta.senderAddress = config.senderAddress;
+            }
+        }
+
+        if (config.smtp !== undefined) {
+            updateBody.smtp = config.smtp;
+        }
+
+        return this.update(updateBody, options);
+    }
+
+    /**
+     * Sends a test email with the configured SMTP settings.
+     * 
+     * This is a convenience method for testing email configuration.
+     * The possible email template values are:
+     * - verification
+     * - password-reset
+     * - email-change
+     * - otp
+     * - login-alert
+     * 
+     * @param toEmail - Email address to send the test email to
+     * @param template - Email template to use (default: "verification")
+     * @param collectionIdOrName - Collection ID or name (default: "_superusers")
+     * @param options - Optional request options
+     * @returns true if email was sent successfully
+     * @throws {ClientResponseError}
+     */
+    async testMail(
+        toEmail: string,
+        template: string = "verification",
+        collectionIdOrName: string = "_superusers",
+        options?: CommonOptions,
+    ): Promise<boolean> {
+        return this.testEmail(collectionIdOrName, toEmail, template, options);
+    }
+
     /**
      * Updates the S3 storage configuration.
      * 
