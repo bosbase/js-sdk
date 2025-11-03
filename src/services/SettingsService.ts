@@ -411,6 +411,115 @@ export class SettingsService extends BaseService {
         return this.update({ backups: config }, options);
     }
 
+    // -------------------------------------------------------------------
+    // Backup-Specific Helpers (Auto-Backup + S3 Storage)
+    // -------------------------------------------------------------------
+
+    /**
+     * Gets the current backup settings (auto-backup schedule and S3 storage configuration).
+     * 
+     * This is a convenience method that returns backup configuration,
+     * matching what's shown on the backups settings page.
+     * 
+     * @param options - Optional request options
+     * @returns Object containing backup configuration (cron, cronMaxKeep, s3)
+     * @throws {ClientResponseError}
+     */
+    async getBackupSettings(options?: CommonOptions): Promise<{
+        cron?: string;
+        cronMaxKeep?: number;
+        s3?: {
+            enabled?: boolean;
+            bucket?: string;
+            region?: string;
+            endpoint?: string;
+            accessKey?: string;
+            secret?: string;
+            forcePathStyle?: boolean;
+        };
+    }> {
+        const allSettings = await this.getAll(options);
+        return allSettings.backups || {};
+    }
+
+    /**
+     * Updates backup settings (auto-backup schedule and S3 storage configuration).
+     * 
+     * This is a convenience method for managing backup configuration:
+     * - Auto-backup cron schedule (leave empty to disable)
+     * - Maximum number of backups to keep
+     * - S3 storage configuration for backups
+     * 
+     * @param config - Backup settings updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateBackupSettings(
+        config: {
+            cron?: string;
+            cronMaxKeep?: number;
+            s3?: {
+                enabled?: boolean;
+                bucket?: string;
+                region?: string;
+                endpoint?: string;
+                accessKey?: string;
+                secret?: string;
+                forcePathStyle?: boolean;
+            };
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.updateBackups(config, options);
+    }
+
+    /**
+     * Sets the auto-backup cron schedule.
+     * 
+     * @param cron - Cron expression (e.g., "0 0 * * *" for daily). Use empty string to disable.
+     * @param cronMaxKeep - Maximum number of backups to keep (required if cron is set)
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async setAutoBackupSchedule(
+        cron: string,
+        cronMaxKeep?: number,
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        const config: any = { cron: cron || "" };
+        if (cronMaxKeep !== undefined) {
+            config.cronMaxKeep = cronMaxKeep;
+        }
+        return this.updateBackups(config, options);
+    }
+
+    /**
+     * Disables auto-backup (removes cron schedule).
+     * 
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async disableAutoBackup(options?: CommonOptions): Promise<{ [key: string]: any }> {
+        return this.updateBackups({ cron: "" }, options);
+    }
+
+    /**
+     * Tests the S3 backups connection.
+     * 
+     * This is a convenience method that tests the "backups" filesystem,
+     * equivalent to calling testS3("backups").
+     * 
+     * @param options - Optional request options
+     * @returns true if connection test succeeds
+     * @throws {ClientResponseError}
+     */
+    async testBackupsS3(options?: CommonOptions): Promise<boolean> {
+        return this.testS3("backups", options);
+    }
+
     /**
      * Updates the Batch request configuration.
      * 

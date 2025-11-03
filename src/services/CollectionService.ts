@@ -82,6 +82,142 @@ export class CollectionService extends CrudService<CollectionModel> {
     }
 
     // -------------------------------------------------------------------
+    // Export/Import Helpers
+    // -------------------------------------------------------------------
+
+    /**
+     * Exports collections in a format suitable for import.
+     * 
+     * This method fetches all collections and prepares them for export by:
+     * - Removing timestamps (created, updated)
+     * - Removing OAuth2 providers (for cleaner export)
+     * 
+     * The returned collections can be saved as JSON and later imported.
+     * 
+     * @param filterCollections - Optional function to filter which collections to export (by default exports all)
+     * @param options - Optional request options
+     * @returns Array of collection models ready for export
+     * @throws {ClientResponseError}
+     */
+    async exportCollections(
+        filterCollections?: (collection: CollectionModel) => boolean,
+        options?: CommonOptions,
+    ): Promise<Array<CollectionModel>> {
+        const collections = await this.getFullList<CollectionModel>(options);
+        
+        // Filter if a filter function is provided
+        let filtered = filterCollections 
+            ? collections.filter(filterCollections)
+            : collections;
+
+        // Clean collections for export (matching UI behavior)
+        const cleaned = filtered.map((collection) => {
+            const cleaned = { ...collection };
+            
+            // Remove timestamps
+            delete (cleaned as any).created;
+            delete (cleaned as any).updated;
+            
+            // Remove OAuth2 providers
+            if ((cleaned as any).oauth2?.providers) {
+                delete (cleaned as any).oauth2.providers;
+            }
+            
+            return cleaned;
+        });
+
+        return cleaned;
+    }
+
+    /**
+     * Normalizes collections data for import.
+     * 
+     * This helper method prepares collections data by:
+     * - Removing timestamps (created, updated)
+     * - Removing duplicate collections by id
+     * - Removing duplicate fields within each collection
+     * 
+     * Use this before calling import() to ensure clean data.
+     * 
+     * @param collections - Array of collection models to normalize
+     * @returns Normalized array of collections ready for import
+     */
+    normalizeForImport(collections: Array<CollectionModel>): Array<CollectionModel> {
+        // Remove duplicates by id
+        const seenIds = new Set<string>();
+        const uniqueCollections = collections.filter((collection) => {
+            if (collection.id && seenIds.has(collection.id)) {
+                return false;
+            }
+            if (collection.id) {
+                seenIds.add(collection.id);
+            }
+            return true;
+        });
+
+        // Normalize each collection
+        return uniqueCollections.map((collection) => {
+            const normalized = { ...collection };
+            
+            // Remove timestamps
+            delete (normalized as any).created;
+            delete (normalized as any).updated;
+            
+            // Remove duplicate fields by id
+            if (Array.isArray(normalized.fields)) {
+                const seenFieldIds = new Set<string>();
+                normalized.fields = normalized.fields.filter((field: any) => {
+                    if (field.id && seenFieldIds.has(field.id)) {
+                        return false;
+                    }
+                    if (field.id) {
+                        seenFieldIds.add(field.id);
+                    }
+                    return true;
+                });
+            }
+            
+            return normalized;
+        });
+    }
+
+    /**
+     * Imports the provided collections.
+     *
+     * If `deleteMissing` is `true`, all local collections and their fields,
+     * that are not present in the imported configuration, WILL BE DELETED
+     * (including their related records data)!
+     *
+     * **Warning**: This operation is destructive when `deleteMissing` is true.
+     * It's recommended to call `normalizeForImport()` on the collections
+     * before importing to ensure clean data.
+     *
+     * @param collections - Array of collection models to import
+     * @param deleteMissing - Whether to delete collections not present in the import (default: false)
+     * @param options - Optional request options
+     * @returns true if import succeeds
+     * @throws {ClientResponseError}
+     */
+    async import(
+        collections: Array<CollectionModel>,
+        deleteMissing: boolean = false,
+        options?: CommonOptions,
+    ): Promise<true> {
+        options = Object.assign(
+            {
+                method: "PUT",
+                body: {
+                    collections: collections,
+                    deleteMissing: deleteMissing,
+                },
+            },
+            options,
+        );
+
+        return this.client.send(this.baseCrudPath + "/import", options).then(() => true);
+    }
+
+    // -------------------------------------------------------------------
     // Field Management Helpers
     // -------------------------------------------------------------------
 
