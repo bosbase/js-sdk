@@ -11,6 +11,7 @@ import { FileService } from "@/services/FileService";
 import { BackupService } from "@/services/BackupService";
 import { CronService } from "@/services/CronService";
 import { BatchService } from "@/services/BatchService";
+import { VectorService } from "@/services/VectorService";
 import { RecordModel } from "@/tools/dtos";
 import {
     SendOptions,
@@ -158,6 +159,11 @@ export default class Client {
      */
     readonly crons: CronService;
 
+    /**
+     * An instance of the service that handles the **Vector APIs**.
+     */
+    readonly vectors: VectorService;
+
     private cancelControllers: { [key: string]: AbortController } = {};
     private recordServices: { [key: string]: RecordService } = {};
     private enableAutoCancellation: boolean = true;
@@ -184,6 +190,7 @@ export default class Client {
         this.health = new HealthService(this);
         this.backups = new BackupService(this);
         this.crons = new CronService(this);
+        this.vectors = new VectorService(this);
     }
 
     /**
