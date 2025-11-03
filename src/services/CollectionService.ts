@@ -11,6 +11,27 @@ export class CollectionService extends CrudService<CollectionModel> {
     }
 
     /**
+     * Deletes a collection (table) by its id or name.
+     * 
+     * This is a convenience method that wraps the inherited `delete()` method
+     * to make collection deletion explicit.
+     * 
+     * **Warning**: This operation is destructive and will delete the collection
+     * along with all its records and associated data.
+     * 
+     * @param collectionIdOrName - Collection id or name to delete
+     * @param options - Optional request options
+     * @returns true if deletion succeeds
+     * @throws {ClientResponseError}
+     */
+    async deleteCollection(
+        collectionIdOrName: string,
+        options?: CommonOptions,
+    ): Promise<boolean> {
+        return this.delete(collectionIdOrName, options);
+    }
+
+    /**
      * Imports the provided collections.
      *
      * If `deleteMissing` is `true`, all local collections and their fields,
@@ -55,6 +76,105 @@ export class CollectionService extends CrudService<CollectionModel> {
         );
 
         return this.client.send(this.baseCrudPath + "/meta/scaffolds", options);
+    }
+
+    /**
+     * Creates a new collection from a scaffold template.
+     * 
+     * This is a convenience method that fetches the scaffold for the specified type
+     * and creates a new collection with the given name, using the scaffold as a base.
+     * 
+     * @param type - Collection type: "base", "auth", or "view"
+     * @param name - Collection name
+     * @param overrides - Optional properties to override in the scaffold
+     * @param options - Optional request options
+     * @returns Created collection model
+     * @throws {ClientResponseError}
+     */
+    async createFromScaffold(
+        type: "base" | "auth" | "view",
+        name: string,
+        overrides?: Partial<CollectionModel>,
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        const scaffolds = await this.getScaffolds(options);
+        const scaffold = scaffolds[type];
+        
+        if (!scaffold) {
+            throw new Error(`Scaffold for type "${type}" not found`);
+        }
+
+        // Create collection based on scaffold with overrides
+        const collection: CollectionModel = {
+            ...scaffold,
+            name: name,
+            ...overrides,
+        };
+
+        return this.create(collection, options);
+    }
+
+    /**
+     * Creates a new base collection.
+     * 
+     * Convenience method for creating a base collection type.
+     * 
+     * @param name - Collection name
+     * @param overrides - Optional properties to override
+     * @param options - Optional request options
+     * @returns Created collection model
+     * @throws {ClientResponseError}
+     */
+    async createBase(
+        name: string,
+        overrides?: Partial<CollectionModel>,
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        return this.createFromScaffold("base", name, overrides, options);
+    }
+
+    /**
+     * Creates a new auth collection.
+     * 
+     * Convenience method for creating an auth collection type.
+     * 
+     * @param name - Collection name
+     * @param overrides - Optional properties to override
+     * @param options - Optional request options
+     * @returns Created collection model
+     * @throws {ClientResponseError}
+     */
+    async createAuth(
+        name: string,
+        overrides?: Partial<CollectionModel>,
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        return this.createFromScaffold("auth", name, overrides, options);
+    }
+
+    /**
+     * Creates a new view collection.
+     * 
+     * Convenience method for creating a view collection type.
+     * 
+     * @param name - Collection name
+     * @param viewQuery - SQL query for the view (required for view collections)
+     * @param overrides - Optional properties to override
+     * @param options - Optional request options
+     * @returns Created collection model
+     * @throws {ClientResponseError}
+     */
+    async createView(
+        name: string,
+        viewQuery?: string,
+        overrides?: Partial<CollectionModel>,
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        const scaffoldOverrides: Partial<CollectionModel> = {
+            ...overrides,
+            ...(viewQuery ? { viewQuery } : {}),
+        };
+        return this.createFromScaffold("view", name, scaffoldOverrides, options);
     }
 
     /**
@@ -308,13 +428,18 @@ export class CollectionService extends CrudService<CollectionModel> {
     }
 
     /**
-     * Removes a field from the collection.
+     * Removes a field from the collection (deletes a table field).
+     * 
+     * This method removes a field from the collection schema and automatically
+     * removes any indexes that reference the deleted field.
+     * 
+     * **Note**: System fields cannot be removed.
      * 
      * @param collectionIdOrName - Collection id or name
      * @param fieldName - Name of the field to remove
      * @param options - Optional request options
      * @returns Updated collection model
-     * @throws {ClientResponseError}
+     * @throws {ClientResponseError} if field not found or if attempting to remove a system field
      */
     async removeField(
         collectionIdOrName: string,
@@ -420,13 +545,16 @@ export class CollectionService extends CrudService<CollectionModel> {
     }
 
     /**
-     * Removes an index from the collection.
+     * Removes an index from the collection (deletes a table index).
+     * 
+     * This method removes an index that contains all the specified columns.
+     * The index is identified by matching all provided column names.
      * 
      * @param collectionIdOrName - Collection id or name
      * @param columns - Array of column names that identify the index to remove
      * @param options - Optional request options
      * @returns Updated collection model
-     * @throws {ClientResponseError}
+     * @throws {ClientResponseError} if index not found
      */
     async removeIndex(
         collectionIdOrName: string,
