@@ -126,4 +126,197 @@ export class SettingsService extends BaseService {
 
         return this.client.send("/api/settings/apple/generate-client-secret", options);
     }
+
+    // -------------------------------------------------------------------
+    // Settings Category Helpers
+    // -------------------------------------------------------------------
+
+    /**
+     * Gets a specific settings category.
+     * 
+     * @param category - The settings category name (meta, smtp, s3, backups, batch, rateLimits, trustedProxy, logs)
+     * @param options - Optional request options
+     * @returns The settings category object
+     * @throws {ClientResponseError}
+     */
+    async getCategory(category: string, options?: CommonOptions): Promise<any> {
+        const allSettings = await this.getAll(options);
+        return allSettings[category] || null;
+    }
+
+    /**
+     * Updates the Meta configuration (app name, URL, sender info, etc.).
+     * 
+     * @param config - Meta configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateMeta(
+        config: {
+            appName?: string;
+            appURL?: string;
+            senderName?: string;
+            senderAddress?: string;
+            hideControls?: boolean;
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.update({ meta: config }, options);
+    }
+
+    /**
+     * Updates the SMTP email configuration.
+     * 
+     * @param config - SMTP configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateSMTP(
+        config: {
+            enabled?: boolean;
+            host?: string;
+            port?: number;
+            username?: string;
+            password?: string;
+            authMethod?: string;
+            tls?: boolean;
+            localName?: string;
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.update({ smtp: config }, options);
+    }
+
+    /**
+     * Updates the S3 storage configuration.
+     * 
+     * @param config - S3 configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateS3(
+        config: {
+            enabled?: boolean;
+            bucket?: string;
+            region?: string;
+            endpoint?: string;
+            accessKey?: string;
+            secret?: string;
+            forcePathStyle?: boolean;
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.update({ s3: config }, options);
+    }
+
+    /**
+     * Updates the Backups configuration (scheduling and S3 storage).
+     * 
+     * @param config - Backups configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateBackups(
+        config: {
+            cron?: string;
+            cronMaxKeep?: number;
+            s3?: {
+                enabled?: boolean;
+                bucket?: string;
+                region?: string;
+                endpoint?: string;
+                accessKey?: string;
+                secret?: string;
+                forcePathStyle?: boolean;
+            };
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.update({ backups: config }, options);
+    }
+
+    /**
+     * Updates the Batch request configuration.
+     * 
+     * @param config - Batch configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateBatch(
+        config: {
+            enabled?: boolean;
+            maxRequests?: number;
+            timeout?: number;
+            maxBodySize?: number;
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.update({ batch: config }, options);
+    }
+
+    /**
+     * Updates the Rate Limits configuration.
+     * 
+     * @param config - Rate limits configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateRateLimits(
+        config: {
+            enabled?: boolean;
+            rules?: Array<{
+                label: string;
+                audience?: string;
+                duration: number;
+                maxRequests: number;
+            }>;
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.update({ rateLimits: config }, options);
+    }
+
+    /**
+     * Updates the Trusted Proxy configuration.
+     * 
+     * @param config - Trusted proxy configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateTrustedProxy(
+        config: {
+            headers?: Array<string>;
+            useLeftmostIP?: boolean;
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.update({ trustedProxy: config }, options);
+    }
+
+    /**
+     * Updates the Logs configuration.
+     * 
+     * @param config - Logs configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateLogs(
+        config: {
+            maxDays?: number;
+            minLevel?: number;
+            logIP?: boolean;
+            logAuthId?: boolean;
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.update({ logs: config }, options);
+    }
 }
