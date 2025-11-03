@@ -605,14 +605,28 @@ export class CollectionService extends CrudService<CollectionModel> {
     }
 
     // -------------------------------------------------------------------
-    // Access Rights Management Helpers
+    // API Rules Management Helpers
     // -------------------------------------------------------------------
 
     /**
      * Sets the list rule (read/list access rule) for the collection.
      * 
+     * API Rules are collection access controls and data filters. Each rule can be:
+     * - `null` (locked) - Only superusers can perform the action (default)
+     * - `""` (empty string) - Anyone can perform the action
+     * - Non-empty string - Only users satisfying the filter expression can perform the action
+     * 
+     * Rules support filter syntax with operators (=, !=, >, <, ~, etc.), macros (@now, @request.auth.id, etc.),
+     * and modifiers (:isset, :length, :each, :lower).
+     * 
+     * Examples:
+     * - Allow only registered users: `"@request.auth.id != \"\""`
+     * - Filter by status: `"status = \"active\""`
+     * - Combine conditions: `"@request.auth.id != \"\" && (status = \"active\" || status = \"pending\")"`
+     * - Filter by relation: `"@request.auth.id != \"\" && author.id ?= @request.auth.id"`
+     * 
      * @param collectionIdOrName - Collection id or name
-     * @param rule - Rule expression (use null or empty string to remove)
+     * @param rule - Rule expression (use null, empty string, or "" to allow anyone; use non-empty string for filter)
      * @param options - Optional request options
      * @returns Updated collection model
      * @throws {ClientResponseError}
@@ -630,8 +644,10 @@ export class CollectionService extends CrudService<CollectionModel> {
     /**
      * Sets the view rule (read/view access rule) for the collection.
      * 
+     * See `setListRule` for details on rule syntax and examples.
+     * 
      * @param collectionIdOrName - Collection id or name
-     * @param rule - Rule expression (use null or empty string to remove)
+     * @param rule - Rule expression (use null, empty string, or "" to allow anyone; use non-empty string for filter)
      * @param options - Optional request options
      * @returns Updated collection model
      * @throws {ClientResponseError}
@@ -649,8 +665,10 @@ export class CollectionService extends CrudService<CollectionModel> {
     /**
      * Sets the create rule for the collection.
      * 
+     * See `setListRule` for details on rule syntax and examples.
+     * 
      * @param collectionIdOrName - Collection id or name
-     * @param rule - Rule expression (use null or empty string to remove)
+     * @param rule - Rule expression (use null, empty string, or "" to allow anyone; use non-empty string for filter)
      * @param options - Optional request options
      * @returns Updated collection model
      * @throws {ClientResponseError}
@@ -668,8 +686,10 @@ export class CollectionService extends CrudService<CollectionModel> {
     /**
      * Sets the update rule for the collection.
      * 
+     * See `setListRule` for details on rule syntax and examples.
+     * 
      * @param collectionIdOrName - Collection id or name
-     * @param rule - Rule expression (use null or empty string to remove)
+     * @param rule - Rule expression (use null, empty string, or "" to allow anyone; use non-empty string for filter)
      * @param options - Optional request options
      * @returns Updated collection model
      * @throws {ClientResponseError}
@@ -687,8 +707,10 @@ export class CollectionService extends CrudService<CollectionModel> {
     /**
      * Sets the delete rule for the collection.
      * 
+     * See `setListRule` for details on rule syntax and examples.
+     * 
      * @param collectionIdOrName - Collection id or name
-     * @param rule - Rule expression (use null or empty string to remove)
+     * @param rule - Rule expression (use null, empty string, or "" to allow anyone; use non-empty string for filter)
      * @param options - Optional request options
      * @returns Updated collection model
      * @throws {ClientResponseError}
@@ -700,6 +722,146 @@ export class CollectionService extends CrudService<CollectionModel> {
     ): Promise<CollectionModel> {
         const collection = await this.getOne(collectionIdOrName, options);
         collection.deleteRule = rule || undefined;
+        return this.update(collectionIdOrName, collection, options);
+    }
+
+    /**
+     * Sets all API rules at once for the collection.
+     * 
+     * This is a convenience method to update multiple rules in a single operation.
+     * 
+     * @param collectionIdOrName - Collection id or name
+     * @param rules - Object containing rule expressions (listRule, viewRule, createRule, updateRule, deleteRule)
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError}
+     */
+    async setRules(
+        collectionIdOrName: string,
+        rules: {
+            listRule?: string | null;
+            viewRule?: string | null;
+            createRule?: string | null;
+            updateRule?: string | null;
+            deleteRule?: string | null;
+        },
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        const collection = await this.getOne(collectionIdOrName, options);
+        
+        if (rules.listRule !== undefined) {
+            collection.listRule = rules.listRule || undefined;
+        }
+        if (rules.viewRule !== undefined) {
+            collection.viewRule = rules.viewRule || undefined;
+        }
+        if (rules.createRule !== undefined) {
+            collection.createRule = rules.createRule || undefined;
+        }
+        if (rules.updateRule !== undefined) {
+            collection.updateRule = rules.updateRule || undefined;
+        }
+        if (rules.deleteRule !== undefined) {
+            collection.deleteRule = rules.deleteRule || undefined;
+        }
+        
+        return this.update(collectionIdOrName, collection, options);
+    }
+
+    /**
+     * Gets all API rules for the collection.
+     * 
+     * @param collectionIdOrName - Collection id or name
+     * @param options - Optional request options
+     * @returns Object containing all rules (listRule, viewRule, createRule, updateRule, deleteRule)
+     * @throws {ClientResponseError}
+     */
+    async getRules(
+        collectionIdOrName: string,
+        options?: CommonOptions,
+    ): Promise<{
+        listRule?: string;
+        viewRule?: string;
+        createRule?: string;
+        updateRule?: string;
+        deleteRule?: string;
+    }> {
+        const collection = await this.getOne(collectionIdOrName, options);
+        return {
+            listRule: collection.listRule || undefined,
+            viewRule: collection.viewRule || undefined,
+            createRule: collection.createRule || undefined,
+            updateRule: collection.updateRule || undefined,
+            deleteRule: collection.deleteRule || undefined,
+        };
+    }
+
+    /**
+     * Sets the manage rule for an auth collection.
+     * 
+     * ManageRule gives admin-like permissions to allow fully managing auth record(s),
+     * e.g. changing password without requiring the old one, directly updating verified state and email, etc.
+     * This rule is executed in addition to the Create and Update API rules.
+     * 
+     * Only available for auth collections (type === "auth").
+     * 
+     * @param collectionIdOrName - Auth collection id or name
+     * @param rule - Rule expression (use null to remove; empty string is not allowed for manageRule)
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError} if collection is not an auth collection
+     */
+    async setManageRule(
+        collectionIdOrName: string,
+        rule: string | null,
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        const collection = await this.getOne(collectionIdOrName, options);
+        
+        if (collection.type !== "auth") {
+            throw new Error("ManageRule is only available for auth collections");
+        }
+        
+        // AuthCollectionModel has manageRule as a direct property
+        const authCollection = collection as any;
+        authCollection.manageRule = rule || undefined;
+        
+        return this.update(collectionIdOrName, collection, options);
+    }
+
+    /**
+     * Sets the auth rule for an auth collection.
+     * 
+     * AuthRule specifies additional record constraints applied after record authentication
+     * and right before returning the auth token response to the client.
+     * For example, to allow only verified users: `"verified = true"`
+     * 
+     * Set to empty string to allow any Auth collection record to authenticate.
+     * Set to null to disallow authentication altogether for the collection.
+     * 
+     * Only available for auth collections (type === "auth").
+     * 
+     * @param collectionIdOrName - Auth collection id or name
+     * @param rule - Rule expression (use null to disallow auth; empty string to allow all; non-empty for filter)
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError} if collection is not an auth collection
+     */
+    async setAuthRule(
+        collectionIdOrName: string,
+        rule: string | null,
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        const collection = await this.getOne(collectionIdOrName, options);
+        
+        if (collection.type !== "auth") {
+            throw new Error("AuthRule is only available for auth collections");
+        }
+        
+        // AuthCollectionModel has authRule as a direct property
+        const authCollection = collection as any;
+        authCollection.authRule = rule || undefined;
+        
         return this.update(collectionIdOrName, collection, options);
     }
 }

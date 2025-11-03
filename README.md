@@ -928,6 +928,8 @@ const result = await batch.send()
 
 ##### CollectionService
 
+> 📖 **API Rules Documentation**: See [docs/api-rules.md](./docs/api-rules.md) for comprehensive guide on managing API rules, filter syntax, and examples.
+
 ```js
 // Returns a paginated collections list.
 🔐 pb.collections.getList(page = 1, perPage = 30, options = {});
@@ -959,6 +961,37 @@ const result = await batch.send()
 
 // Returns type indexed map with scaffolded collection models populated with their default field values.
 🔐 pb.collections.getScaffolds(options = {});
+
+// Collection creation from scaffolds
+🔐 pb.collections.createFromScaffold(type, name, overrides?, options = {});
+🔐 pb.collections.createBase(name, overrides?, options = {});
+🔐 pb.collections.createAuth(name, overrides?, options = {});
+🔐 pb.collections.createView(name, viewQuery?, overrides?, options = {});
+
+// Field management
+🔐 pb.collections.addField(collectionIdOrName, field, options = {});
+🔐 pb.collections.updateField(collectionIdOrName, fieldName, updates, options = {});
+🔐 pb.collections.removeField(collectionIdOrName, fieldName, options = {});
+🔐 pb.collections.getField(collectionIdOrName, fieldName, options = {});
+
+// Index management
+🔐 pb.collections.addIndex(collectionIdOrName, columns, unique?, indexName?, options = {});
+🔐 pb.collections.removeIndex(collectionIdOrName, columns, options = {});
+🔐 pb.collections.getIndexes(collectionIdOrName, options = {});
+
+// API Rules management
+🔐 pb.collections.setListRule(collectionIdOrName, rule, options = {});
+🔐 pb.collections.setViewRule(collectionIdOrName, rule, options = {});
+🔐 pb.collections.setCreateRule(collectionIdOrName, rule, options = {});
+🔐 pb.collections.setUpdateRule(collectionIdOrName, rule, options = {});
+🔐 pb.collections.setDeleteRule(collectionIdOrName, rule, options = {});
+🔐 pb.collections.setRules(collectionIdOrName, rules, options = {});  // Set all rules at once
+🔐 pb.collections.getRules(collectionIdOrName, options = {});  // Get all rules
+🔐 pb.collections.setManageRule(collectionIdOrName, rule, options = {});  // Auth collections only
+🔐 pb.collections.setAuthRule(collectionIdOrName, rule, options = {});  // Auth collections only
+
+// Collection deletion
+🔐 pb.collections.deleteCollection(collectionIdOrName, options = {});  // Alias for delete()
 ```
 
 ---
