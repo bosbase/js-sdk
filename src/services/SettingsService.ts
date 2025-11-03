@@ -165,6 +165,92 @@ export class SettingsService extends BaseService {
         return this.update({ meta: config }, options);
     }
 
+    // -------------------------------------------------------------------
+    // Application Configuration Helpers (Meta + TrustedProxy + RateLimits + Batch)
+    // -------------------------------------------------------------------
+
+    /**
+     * Gets the current application configuration settings.
+     * 
+     * This is a convenience method that returns all application configuration,
+     * matching what's shown on the application settings page (`/_/#/settings`):
+     * - Meta settings (app name, URL, hideControls)
+     * - TrustedProxy settings
+     * - RateLimits settings
+     * - Batch settings
+     * 
+     * @param options - Optional request options
+     * @returns Object containing application configuration
+     * @throws {ClientResponseError}
+     */
+    async getApplicationSettings(options?: CommonOptions): Promise<{
+        meta?: {
+            appName?: string;
+            appURL?: string;
+            senderName?: string;
+            senderAddress?: string;
+            hideControls?: boolean;
+        };
+        trustedProxy?: {
+            headers?: Array<string>;
+            useLeftmostIP?: boolean;
+        };
+        rateLimits?: {
+            rules?: Array<any>;
+        };
+        batch?: {
+            enabled?: boolean;
+            maxRequests?: number;
+            interval?: number;
+        };
+    }> {
+        const allSettings = await this.getAll(options);
+        return {
+            meta: allSettings.meta,
+            trustedProxy: allSettings.trustedProxy,
+            rateLimits: allSettings.rateLimits,
+            batch: allSettings.batch,
+        };
+    }
+
+    /**
+     * Updates application configuration settings.
+     * 
+     * This is a convenience method for managing all application configuration
+     * categories at once (meta, trustedProxy, rateLimits, batch).
+     * 
+     * @param config - Application configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateApplicationSettings(
+        config: {
+            meta?: {
+                appName?: string;
+                appURL?: string;
+                senderName?: string;
+                senderAddress?: string;
+                hideControls?: boolean;
+            };
+            trustedProxy?: {
+                headers?: Array<string>;
+                useLeftmostIP?: boolean;
+            };
+            rateLimits?: {
+                rules?: Array<any>;
+            };
+            batch?: {
+                enabled?: boolean;
+                maxRequests?: number;
+                interval?: number;
+            };
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.update(config, options);
+    }
+
     /**
      * Updates the SMTP email configuration.
      * 
