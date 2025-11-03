@@ -1110,6 +1110,46 @@ pb.realtime.onDisconnect = function(activeSubscriptions)
 🔓 pb.health.check(options = {});
 ```
 
+---
+
+##### VectorService ([API docs](./VECTOR_API.md))
+
+> Vector database operations for semantic search, RAG, and AI applications.
+
+```js
+// Create a vector collection
+🔐 pb.vectors.createCollection(name, config?, options = {});
+
+// List all vector collections
+🔐 pb.vectors.listCollections(options = {});
+
+// Delete a vector collection
+🔐 pb.vectors.deleteCollection(name, options = {});
+
+// Insert a single vector document
+🔐 pb.vectors.insert(document, options = {});
+
+// Insert multiple vector documents in a batch
+🔐 pb.vectors.batchInsert(batchOptions, options = {});
+
+// Get a vector document by ID
+🔐 pb.vectors.get(id, options = {});
+
+// Update an existing vector document
+🔐 pb.vectors.update(id, document, options = {});
+
+// Delete a vector document
+🔐 pb.vectors.delete(id, options = {});
+
+// List vector documents (with pagination)
+🔐 pb.vectors.list(options = {});
+
+// Search for similar vectors
+🔐 pb.vectors.search(searchOptions, options = {});
+```
+
+> 📖 **Vector Database Documentation**: See [VECTOR_API.md](./VECTOR_API.md) for comprehensive vector operations guide, examples, and best practices.
+
 
 ## Development
 ```sh
