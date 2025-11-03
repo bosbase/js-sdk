@@ -600,4 +600,121 @@ export class SettingsService extends BaseService {
     ): Promise<{ [key: string]: any }> {
         return this.update({ logs: config }, options);
     }
+
+    // -------------------------------------------------------------------
+    // Log-Specific Helpers
+    // -------------------------------------------------------------------
+
+    /**
+     * Gets the current log settings configuration.
+     * 
+     * This is a convenience method that returns log configuration,
+     * matching what's shown on the logs settings panel.
+     * 
+     * @param options - Optional request options
+     * @returns Object containing log configuration (maxDays, minLevel, logIP, logAuthId)
+     * @throws {ClientResponseError}
+     */
+    async getLogSettings(options?: CommonOptions): Promise<{
+        maxDays?: number;
+        minLevel?: number;
+        logIP?: boolean;
+        logAuthId?: boolean;
+    }> {
+        const allSettings = await this.getAll(options);
+        return allSettings.logs || {};
+    }
+
+    /**
+     * Updates log settings configuration.
+     * 
+     * This is a convenience method for managing log configuration:
+     * - Maximum days to retain logs
+     * - Minimum log level
+     * - Whether to log IP addresses
+     * - Whether to log authentication IDs
+     * 
+     * @param config - Log settings updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async updateLogSettings(
+        config: {
+            maxDays?: number;
+            minLevel?: number;
+            logIP?: boolean;
+            logAuthId?: boolean;
+        },
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.updateLogs(config, options);
+    }
+
+    /**
+     * Sets the maximum number of days to retain logs.
+     * 
+     * @param maxDays - Maximum days to retain logs (0 or greater)
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async setLogRetentionDays(
+        maxDays: number,
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.updateLogs({ maxDays }, options);
+    }
+
+    /**
+     * Sets the minimum log level.
+     * 
+     * Log levels:
+     * - Negative values: Debug/Info levels
+     * - 0: Default/Warning level
+     * - Positive values: Error levels
+     * 
+     * Only logs at or above this level will be retained.
+     * 
+     * @param minLevel - Minimum log level (-100 to 100)
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async setMinLogLevel(
+        minLevel: number,
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.updateLogs({ minLevel }, options);
+    }
+
+    /**
+     * Enables or disables IP address logging.
+     * 
+     * @param enabled - Whether to log IP addresses
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async setLogIPAddresses(
+        enabled: boolean,
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.updateLogs({ logIP: enabled }, options);
+    }
+
+    /**
+     * Enables or disables authentication ID logging.
+     * 
+     * @param enabled - Whether to log authentication IDs
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    async setLogAuthIds(
+        enabled: boolean,
+        options?: CommonOptions,
+    ): Promise<{ [key: string]: any }> {
+        return this.updateLogs({ logAuthId: enabled }, options);
+    }
 }
