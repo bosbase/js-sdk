@@ -138,3 +138,29 @@ export type CollectionModel =
     | BaseCollectionModel
     | ViewCollectionModel
     | AuthCollectionModel;
+
+// -------------------------------------------------------------------
+// Schema types
+// -------------------------------------------------------------------
+
+/**
+ * Collection field schema information.
+ * Used for simplified schema queries that return only field names, types, and basic metadata.
+ */
+export interface CollectionFieldSchemaInfo {
+    name: string;
+    type: string;
+    required?: boolean;
+    system?: boolean;
+    hidden?: boolean;
+}
+
+/**
+ * Collection schema information.
+ * Used for simplified schema queries that return only collection structure information.
+ */
+export interface CollectionSchemaInfo {
+    name: string;
+    type: string;
+    fields: Array<CollectionFieldSchemaInfo>;
+}

@@ -1,5 +1,5 @@
 import { CrudService } from "@/services/CrudService";
-import { CollectionModel, CollectionField } from "@/tools/dtos";
+import { CollectionModel, CollectionField, CollectionSchemaInfo } from "@/tools/dtos";
 import { CommonOptions } from "@/tools/options";
 
 export class CollectionService extends CrudService<CollectionModel> {
@@ -863,5 +863,67 @@ export class CollectionService extends CrudService<CollectionModel> {
         authCollection.authRule = rule || undefined;
         
         return this.update(collectionIdOrName, collection, options);
+    }
+
+    // -------------------------------------------------------------------
+    // Schema Query Methods
+    // -------------------------------------------------------------------
+
+    /**
+     * Gets the schema (fields and types) for a single collection.
+     * 
+     * This method returns simplified schema information containing only
+     * field names, types, and basic metadata (required, system, hidden flags).
+     * This is useful for AI systems to understand the structure of collections
+     * without fetching the full collection definition.
+     * 
+     * @param collectionIdOrName - Collection id or name
+     * @param options - Optional request options
+     * @returns Collection schema information
+     * @throws {ClientResponseError}
+     */
+    async getSchema(
+        collectionIdOrName: string,
+        options?: CommonOptions,
+    ): Promise<CollectionSchemaInfo> {
+        options = Object.assign(
+            {
+                method: "GET",
+            },
+            options,
+        );
+
+        return this.client.send<CollectionSchemaInfo>(
+            this.baseCrudPath + "/" + encodeURIComponent(collectionIdOrName) + "/schema",
+            options,
+        );
+    }
+
+    /**
+     * Gets the schema (fields and types) for all collections in the system.
+     * 
+     * This method returns simplified schema information for all collections,
+     * containing only field names, types, and basic metadata (required, system, hidden flags).
+     * This is useful for AI systems to understand the overall structure of the system
+     * and all available collections without fetching full collection definitions.
+     * 
+     * @param options - Optional request options
+     * @returns Object containing array of collection schemas
+     * @throws {ClientResponseError}
+     */
+    async getAllSchemas(
+        options?: CommonOptions,
+    ): Promise<{ collections: Array<CollectionSchemaInfo> }> {
+        options = Object.assign(
+            {
+                method: "GET",
+            },
+            options,
+        );
+
+        return this.client.send<{ collections: Array<CollectionSchemaInfo> }>(
+            this.baseCrudPath + "/schemas",
+            options,
+        );
     }
 }
