@@ -81,7 +81,153 @@ const collection = await pb.collections.create({
 ### Update Collection
 
 ```javascript
+// Update collection rules
 await pb.collections.update('articles', { listRule: 'published = true' });
+
+// Update collection name
+await pb.collections.update('articles', { name: 'posts' });
+```
+
+### Add Fields to Collection
+
+To add a new field to an existing collection, fetch the collection, add the field to the fields array, and update:
+
+```javascript
+// Get existing collection
+const collection = await pb.collections.getOne('articles');
+
+// Add new field to existing fields
+collection.fields.push({
+  name: 'views',
+  type: 'number',
+  min: 0,
+  onlyInt: true
+});
+
+// Update collection with new field
+await pb.collections.update('articles', {
+  fields: collection.fields
+});
+
+// Or add multiple fields at once
+collection.fields.push(
+  {
+    name: 'excerpt',
+    type: 'text',
+    max: 500
+  },
+  {
+    name: 'cover',
+    type: 'file',
+    maxSelect: 1,
+    mimeTypes: ['image/jpeg', 'image/png']
+  }
+);
+
+await pb.collections.update('articles', {
+  fields: collection.fields
+});
+```
+
+### Delete Fields from Collection
+
+To delete a field, fetch the collection, remove the field from the fields array, and update:
+
+```javascript
+// Get existing collection
+const collection = await pb.collections.getOne('articles');
+
+// Remove field by filtering it out
+collection.fields = collection.fields.filter(field => field.name !== 'oldFieldName');
+
+// Update collection without the deleted field
+await pb.collections.update('articles', {
+  fields: collection.fields
+});
+
+// Or remove multiple fields
+const fieldsToKeep = ['title', 'content', 'author', 'status'];
+collection.fields = collection.fields.filter(field => 
+  fieldsToKeep.includes(field.name) || field.system
+);
+
+await pb.collections.update('articles', {
+  fields: collection.fields
+});
+```
+
+### Modify Fields in Collection
+
+To modify an existing field (e.g., change its type, add options, etc.), fetch the collection, update the field object, and save:
+
+```javascript
+// Get existing collection
+const collection = await pb.collections.getOne('articles');
+
+// Find and modify a field
+const titleField = collection.fields.find(f => f.name === 'title');
+if (titleField) {
+  titleField.max = 200;  // Change max length
+  titleField.required = true;  // Make required
+}
+
+// Update the field type
+const statusField = collection.fields.find(f => f.name === 'status');
+if (statusField) {
+  // Note: Changing field types may require data migration
+  statusField.type = 'select';
+  statusField.options = {
+    values: ['draft', 'published', 'archived']
+  };
+  statusField.maxSelect = 1;
+}
+
+// Save changes
+await pb.collections.update('articles', {
+  fields: collection.fields
+});
+```
+
+### Complete Example: Managing Collection Fields
+
+```javascript
+import BosBase from 'bosbase';
+
+const pb = new BosBase('http://localhost:8090');
+await pb.admins.authWithPassword('admin@example.com', 'password');
+
+// Get existing collection
+let collection = await pb.collections.getOne('articles');
+
+// Add new fields
+collection.fields.push(
+  {
+    name: 'tags',
+    type: 'select',
+    options: {
+      values: ['tech', 'design', 'business']
+    },
+    maxSelect: 5
+  },
+  {
+    name: 'published_at',
+    type: 'date'
+  }
+);
+
+// Remove an old field
+collection.fields = collection.fields.filter(f => f.name !== 'oldField');
+
+// Modify existing field
+const viewsField = collection.fields.find(f => f.name === 'views');
+if (viewsField) {
+  viewsField.max = 1000000;  // Increase max value
+}
+
+// Save all changes at once
+await pb.collections.update('articles', {
+  fields: collection.fields
+});
 ```
 
 ### Delete Collection
