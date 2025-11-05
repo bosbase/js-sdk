@@ -77,23 +77,20 @@ const collection = await pb.collections.create({
   fields: [
     { name: 'title', type: 'text', required: true },
     // Note: created and updated fields must be explicitly added if you want to use them
+    // For autodate fields, onCreate and onUpdate must be direct properties, not nested in options
     {
       name: 'created',
       type: 'autodate',
       required: false,
-      options: {
-        onCreate: true,
-        onUpdate: false
-      }
+      onCreate: true,
+      onUpdate: false
     },
     {
       name: 'updated',
       type: 'autodate',
       required: false,
-      options: {
-        onCreate: true,
-        onUpdate: true
-      }
+      onCreate: true,
+      onUpdate: true
     }
   ]
 });
@@ -142,6 +139,29 @@ collection.fields.push(
     type: 'file',
     maxSelect: 1,
     mimeTypes: ['image/jpeg', 'image/png']
+  }
+);
+
+await pb.collections.update('articles', {
+  fields: collection.fields
+});
+
+// Adding created and updated autodate fields to existing collection
+// Note: onCreate and onUpdate must be direct properties, not nested in options
+collection.fields.push(
+  {
+    name: 'created',
+    type: 'autodate',
+    required: false,
+    onCreate: true,
+    onUpdate: false
+  },
+  {
+    name: 'updated',
+    type: 'autodate',
+    required: false,
+    onCreate: true,
+    onUpdate: true
   }
 );
 
@@ -355,18 +375,16 @@ await pb.collection('articles').create({
 
 ### AutodateField
 
-**Important Note:** Bosbase does not initialize `created` and `updated` fields by default. To use these fields, you must explicitly add them when initializing the collection with the proper options:
+**Important Note:** Bosbase does not initialize `created` and `updated` fields by default. To use these fields, you must explicitly add them when initializing the collection. For autodate fields, `onCreate` and `onUpdate` must be direct properties of the field object, not nested in an `options` object:
 
 ```javascript
-// Create field with proper options
+// Create field with proper structure
 {
   name: 'created',
   type: 'autodate',
   required: false,
-  options: {
-    onCreate: true,  // Set on record creation
-    onUpdate: false  // Don't update on record update
-  }
+  onCreate: true,  // Set on record creation (direct property)
+  onUpdate: false  // Don't update on record update (direct property)
 }
 
 // For updated field
@@ -374,13 +392,11 @@ await pb.collection('articles').create({
   name: 'updated',
   type: 'autodate',
   required: false,
-  options: {
-    onCreate: true,  // Set on record creation
-    onUpdate: true   // Update on record update
-  }
+  onCreate: true,  // Set on record creation (direct property)
+  onUpdate: true   // Update on record update (direct property)
 }
 
-// The value is automatically set by the backend based on the options
+// The value is automatically set by the backend based on onCreate and onUpdate properties
 ```
 
 ### SelectField
