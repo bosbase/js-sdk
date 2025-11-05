@@ -74,7 +74,28 @@ const view = await pb.collections.createView('stats', 'SELECT * FROM posts');
 const collection = await pb.collections.create({
   type: 'base',
   name: 'articles',
-  fields: [{ name: 'title', type: 'text', required: true }]
+  fields: [
+    { name: 'title', type: 'text', required: true },
+    // Note: created and updated fields must be explicitly added if you want to use them
+    {
+      name: 'created',
+      type: 'autodate',
+      required: false,
+      options: {
+        onCreate: true,
+        onUpdate: false
+      }
+    },
+    {
+      name: 'updated',
+      type: 'autodate',
+      required: false,
+      options: {
+        onCreate: true,
+        onUpdate: true
+      }
+    }
+  ]
 });
 ```
 
@@ -334,9 +355,32 @@ await pb.collection('articles').create({
 
 ### AutodateField
 
+**Important Note:** Bosbase does not initialize `created` and `updated` fields by default. To use these fields, you must explicitly add them when initializing the collection with the proper options:
+
 ```javascript
-{ name: 'created', type: 'autodate' }
-// Value auto-set by backend
+// Create field with proper options
+{
+  name: 'created',
+  type: 'autodate',
+  required: false,
+  options: {
+    onCreate: true,  // Set on record creation
+    onUpdate: false  // Don't update on record update
+  }
+}
+
+// For updated field
+{
+  name: 'updated',
+  type: 'autodate',
+  required: false,
+  options: {
+    onCreate: true,  // Set on record creation
+    onUpdate: true   // Update on record update
+  }
+}
+
+// The value is automatically set by the backend based on the options
 ```
 
 ### SelectField

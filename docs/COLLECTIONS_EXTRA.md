@@ -185,6 +185,25 @@ const collection = await pb.collections.create({
       name: 'views',
       type: 'number',
       min: 0
+    },
+    // Note: created and updated fields must be explicitly added if you want to use them
+    {
+      name: 'created',
+      type: 'autodate',
+      required: false,
+      options: {
+        onCreate: true,
+        onUpdate: false
+      }
+    },
+    {
+      name: 'updated',
+      type: 'autodate',
+      required: false,
+      options: {
+        onCreate: true,
+        onUpdate: true
+      }
     }
   ],
   listRule: "@request.auth.id != '' || published = true",
@@ -257,9 +276,10 @@ const articles = pb.collection('articles');
 ```
 
 ### List Records
+**Important Note:** Bosbase does not initialize `created` and `updated` fields by default. To use these fields, you must explicitly add them when initializing the collection with the proper options:
 
 ```javascript
-// Paginated list
+// Paginated list 
 const result = await pb.collection('articles').getList(1, 20, {
   filter: 'published = true',
   sort: '-created',
@@ -272,6 +292,8 @@ console.log(result.page);       // Current page number
 console.log(result.perPage);    // Items per page
 console.log(result.totalItems); // Total items count
 console.log(result.totalPages); // Total pages count
+
+**Important Note:** Bosbase does not initialize `created` and `updated` fields by default. To use these fields, you must explicitly add them when initializing the collection with the proper options:
 
 // Get all records (automatically paginates)
 const allRecords = await pb.collection('articles').getFullList({
@@ -549,15 +571,32 @@ const records = await pb.collection('articles').getList(1, 20, {
 
 Similar to DateField but its value is auto set on record create/update. Usually used for timestamp fields like "created" and "updated".
 
+**Important Note:** Bosbase does not initialize `created` and `updated` fields by default. To use these fields, you must explicitly add them when initializing the collection with the proper options:
+
 ```javascript
-// Create field
+// Create field with proper options
 {
   name: 'created',
   type: 'autodate',
-  required: false
+  required: false,
+  options: {
+    onCreate: true,  // Set on record creation
+    onUpdate: false  // Don't update on record update
+  }
 }
 
-// The value is automatically set by the backend
+// For updated field
+{
+  name: 'updated',
+  type: 'autodate',
+  required: false,
+  options: {
+    onCreate: true,  // Set on record creation
+    onUpdate: true   // Update on record update
+  }
+}
+
+// The value is automatically set by the backend based on the options
 ```
 
 ### SelectField
