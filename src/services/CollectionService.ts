@@ -32,34 +32,6 @@ export class CollectionService extends CrudService<CollectionModel> {
     }
 
     /**
-     * Imports the provided collections.
-     *
-     * If `deleteMissing` is `true`, all local collections and their fields,
-     * that are not present in the imported configuration, WILL BE DELETED
-     * (including their related records data)!
-     *
-     * @throws {ClientResponseError}
-     */
-    async import(
-        collections: Array<CollectionModel>,
-        deleteMissing: boolean = false,
-        options?: CommonOptions,
-    ): Promise<true> {
-        options = Object.assign(
-            {
-                method: "PUT",
-                body: {
-                    collections: collections,
-                    deleteMissing: deleteMissing,
-                },
-            },
-            options,
-        );
-
-        return this.client.send(this.baseCrudPath + "/import", options).then(() => true);
-    }
-
-    /**
      * Returns type indexed map with scaffolded collection models
      * populated with their default field values.
      *
@@ -105,11 +77,11 @@ export class CollectionService extends CrudService<CollectionModel> {
         }
 
         // Create collection based on scaffold with overrides
-        const collection: CollectionModel = {
+        const collection = {
             ...scaffold,
             name: name,
             ...overrides,
-        };
+        } as CollectionModel;
 
         return this.create(collection, options);
     }
@@ -568,8 +540,6 @@ export class CollectionService extends CrudService<CollectionModel> {
         }
 
         // Find and remove indexes that match the columns
-        const columnsStrWithBackticks = columns.map(col => `\`${col}\``).join(", ");
-        const columnsStr = columns.join(", ");
         const initialLength = collection.indexes.length;
         collection.indexes = collection.indexes.filter((idx) => {
             // Check if index contains all the specified columns

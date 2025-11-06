@@ -6,7 +6,6 @@ import {
     VectorBatchInsertOptions,
     VectorBatchInsertResponse,
     VectorInsertResponse,
-    VectorEmbedding,
 } from "@/tools/vector-types";
 import { SendOptions } from "@/tools/options";
 

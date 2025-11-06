@@ -132,6 +132,29 @@ interface AuthCollectionModel extends collection {
     confirmEmailChangeTemplate: EmailTemplate;
 }
 type CollectionModel = BaseCollectionModel | ViewCollectionModel | AuthCollectionModel;
+// -------------------------------------------------------------------
+// Schema types
+// -------------------------------------------------------------------
+/**
+ * Collection field schema information.
+ * Used for simplified schema queries that return only field names, types, and basic metadata.
+ */
+interface CollectionFieldSchemaInfo {
+    name: string;
+    type: string;
+    required?: boolean;
+    system?: boolean;
+    hidden?: boolean;
+}
+/**
+ * Collection schema information.
+ * Used for simplified schema queries that return only collection structure information.
+ */
+interface CollectionSchemaInfo {
+    name: string;
+    type: string;
+    fields: Array<CollectionFieldSchemaInfo>;
+}
 type AuthRecord = RecordModel | null;
 // for backward compatibility
 type OnStoreChangeFunc = (token: string, record: AuthRecord) => void;
@@ -367,6 +390,535 @@ declare class SettingsService extends BaseService {
      * @throws {ClientResponseError}
      */
     generateAppleClientSecret(clientId: string, teamId: string, keyId: string, privateKey: string, duration: number, options?: CommonOptions): Promise<appleClientSecret>;
+    // -------------------------------------------------------------------
+    // Settings Category Helpers
+    // -------------------------------------------------------------------
+    /**
+     * Gets a specific settings category.
+     *
+     * @param category - The settings category name (meta, smtp, s3, backups, batch, rateLimits, trustedProxy, logs)
+     * @param options - Optional request options
+     * @returns The settings category object
+     * @throws {ClientResponseError}
+     */
+    getCategory(category: string, options?: CommonOptions): Promise<any>;
+    /**
+     * Updates the Meta configuration (app name, URL, sender info, etc.).
+     *
+     * @param config - Meta configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateMeta(config: {
+        appName?: string;
+        appURL?: string;
+        senderName?: string;
+        senderAddress?: string;
+        hideControls?: boolean;
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    // -------------------------------------------------------------------
+    // Application Configuration Helpers (Meta + TrustedProxy + RateLimits + Batch)
+    // -------------------------------------------------------------------
+    /**
+     * Gets the current application configuration settings.
+     *
+     * This is a convenience method that returns all application configuration,
+     * matching what's shown on the application settings page (`/_/#/settings`):
+     * - Meta settings (app name, URL, hideControls)
+     * - TrustedProxy settings
+     * - RateLimits settings
+     * - Batch settings
+     *
+     * @param options - Optional request options
+     * @returns Object containing application configuration
+     * @throws {ClientResponseError}
+     */
+    getApplicationSettings(options?: CommonOptions): Promise<{
+        meta?: {
+            appName?: string;
+            appURL?: string;
+            senderName?: string;
+            senderAddress?: string;
+            hideControls?: boolean;
+        };
+        trustedProxy?: {
+            headers?: Array<string>;
+            useLeftmostIP?: boolean;
+        };
+        rateLimits?: {
+            rules?: Array<any>;
+        };
+        batch?: {
+            enabled?: boolean;
+            maxRequests?: number;
+            interval?: number;
+        };
+    }>;
+    /**
+     * Updates application configuration settings.
+     *
+     * This is a convenience method for managing all application configuration
+     * categories at once (meta, trustedProxy, rateLimits, batch).
+     *
+     * @param config - Application configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateApplicationSettings(config: {
+        meta?: {
+            appName?: string;
+            appURL?: string;
+            senderName?: string;
+            senderAddress?: string;
+            hideControls?: boolean;
+        };
+        trustedProxy?: {
+            headers?: Array<string>;
+            useLeftmostIP?: boolean;
+        };
+        rateLimits?: {
+            rules?: Array<any>;
+        };
+        batch?: {
+            enabled?: boolean;
+            maxRequests?: number;
+            interval?: number;
+        };
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Updates the SMTP email configuration.
+     *
+     * @param config - SMTP configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateSMTP(config: {
+        enabled?: boolean;
+        host?: string;
+        port?: number;
+        username?: string;
+        password?: string;
+        authMethod?: string;
+        tls?: boolean;
+        localName?: string;
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    // -------------------------------------------------------------------
+    // Mail-Specific Helpers (SMTP + Sender Info)
+    // -------------------------------------------------------------------
+    /**
+     * Gets the current mail settings (both sender info from meta and SMTP configuration).
+     *
+     * This is a convenience method that returns both the sender information (meta)
+     * and SMTP configuration together, matching what's shown on the mail settings page.
+     *
+     * @param options - Optional request options
+     * @returns Object containing meta (senderName, senderAddress) and smtp configuration
+     * @throws {ClientResponseError}
+     */
+    getMailSettings(options?: CommonOptions): Promise<{
+        meta?: {
+            senderName?: string;
+            senderAddress?: string;
+        };
+        smtp?: {
+            enabled?: boolean;
+            host?: string;
+            port?: number;
+            username?: string;
+            password?: string;
+            authMethod?: string;
+            tls?: boolean;
+            localName?: string;
+        };
+    }>;
+    /**
+     * Updates mail settings (both sender info and SMTP configuration).
+     *
+     * This is a convenience method that updates both the sender information (meta)
+     * and SMTP configuration in a single call, matching the mail settings page behavior.
+     *
+     * @param config - Mail settings updates (can include both sender info and SMTP config)
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateMailSettings(config: {
+        senderName?: string;
+        senderAddress?: string;
+        smtp?: {
+            enabled?: boolean;
+            host?: string;
+            port?: number;
+            username?: string;
+            password?: string;
+            authMethod?: string;
+            tls?: boolean;
+            localName?: string;
+        };
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Sends a test email with the configured SMTP settings.
+     *
+     * This is a convenience method for testing email configuration.
+     * The possible email template values are:
+     * - verification
+     * - password-reset
+     * - email-change
+     * - otp
+     * - login-alert
+     *
+     * @param toEmail - Email address to send the test email to
+     * @param template - Email template to use (default: "verification")
+     * @param collectionIdOrName - Collection ID or name (default: "_superusers")
+     * @param options - Optional request options
+     * @returns true if email was sent successfully
+     * @throws {ClientResponseError}
+     */
+    testMail(toEmail: string, template?: string, collectionIdOrName?: string, options?: CommonOptions): Promise<boolean>;
+    /**
+     * Updates the S3 storage configuration.
+     *
+     * @param config - S3 configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateS3(config: {
+        enabled?: boolean;
+        bucket?: string;
+        region?: string;
+        endpoint?: string;
+        accessKey?: string;
+        secret?: string;
+        forcePathStyle?: boolean;
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    // -------------------------------------------------------------------
+    // Storage-Specific Helpers (S3 File Storage)
+    // -------------------------------------------------------------------
+    /**
+     * Gets the current S3 storage configuration.
+     *
+     * This is a convenience method specifically for file storage S3 configuration,
+     * equivalent to calling getCategory("s3").
+     *
+     * @param options - Optional request options
+     * @returns S3 storage configuration object
+     * @throws {ClientResponseError}
+     */
+    getStorageS3(options?: CommonOptions): Promise<any>;
+    /**
+     * Updates the S3 storage configuration for file storage.
+     *
+     * This is a convenience method specifically for file storage S3 configuration,
+     * equivalent to calling updateS3().
+     *
+     * @param config - S3 storage configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateStorageS3(config: {
+        enabled?: boolean;
+        bucket?: string;
+        region?: string;
+        endpoint?: string;
+        accessKey?: string;
+        secret?: string;
+        forcePathStyle?: boolean;
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Tests the S3 storage connection for file storage.
+     *
+     * This is a convenience method that tests the "storage" filesystem,
+     * equivalent to calling testS3("storage").
+     *
+     * @param options - Optional request options
+     * @returns true if connection test succeeds
+     * @throws {ClientResponseError}
+     */
+    testStorageS3(options?: CommonOptions): Promise<boolean>;
+    /**
+     * Updates the Backups configuration (scheduling and S3 storage).
+     *
+     * @param config - Backups configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateBackups(config: {
+        cron?: string;
+        cronMaxKeep?: number;
+        s3?: {
+            enabled?: boolean;
+            bucket?: string;
+            region?: string;
+            endpoint?: string;
+            accessKey?: string;
+            secret?: string;
+            forcePathStyle?: boolean;
+        };
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    // -------------------------------------------------------------------
+    // Backup-Specific Helpers (Auto-Backup + S3 Storage)
+    // -------------------------------------------------------------------
+    /**
+     * Gets the current backup settings (auto-backup schedule and S3 storage configuration).
+     *
+     * This is a convenience method that returns backup configuration,
+     * matching what's shown on the backups settings page.
+     *
+     * @param options - Optional request options
+     * @returns Object containing backup configuration (cron, cronMaxKeep, s3)
+     * @throws {ClientResponseError}
+     */
+    getBackupSettings(options?: CommonOptions): Promise<{
+        cron?: string;
+        cronMaxKeep?: number;
+        s3?: {
+            enabled?: boolean;
+            bucket?: string;
+            region?: string;
+            endpoint?: string;
+            accessKey?: string;
+            secret?: string;
+            forcePathStyle?: boolean;
+        };
+    }>;
+    /**
+     * Updates backup settings (auto-backup schedule and S3 storage configuration).
+     *
+     * This is a convenience method for managing backup configuration:
+     * - Auto-backup cron schedule (leave empty to disable)
+     * - Maximum number of backups to keep
+     * - S3 storage configuration for backups
+     *
+     * @param config - Backup settings updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateBackupSettings(config: {
+        cron?: string;
+        cronMaxKeep?: number;
+        s3?: {
+            enabled?: boolean;
+            bucket?: string;
+            region?: string;
+            endpoint?: string;
+            accessKey?: string;
+            secret?: string;
+            forcePathStyle?: boolean;
+        };
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Sets the auto-backup cron schedule.
+     *
+     * @param cron - Cron expression (e.g., "0 0 * * *" for daily). Use empty string to disable.
+     * @param cronMaxKeep - Maximum number of backups to keep (required if cron is set)
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    setAutoBackupSchedule(cron: string, cronMaxKeep?: number, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Disables auto-backup (removes cron schedule).
+     *
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    disableAutoBackup(options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Tests the S3 backups connection.
+     *
+     * This is a convenience method that tests the "backups" filesystem,
+     * equivalent to calling testS3("backups").
+     *
+     * @param options - Optional request options
+     * @returns true if connection test succeeds
+     * @throws {ClientResponseError}
+     */
+    testBackupsS3(options?: CommonOptions): Promise<boolean>;
+    /**
+     * Updates the Batch request configuration.
+     *
+     * @param config - Batch configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateBatch(config: {
+        enabled?: boolean;
+        maxRequests?: number;
+        timeout?: number;
+        maxBodySize?: number;
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Updates the Rate Limits configuration.
+     *
+     * @param config - Rate limits configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateRateLimits(config: {
+        enabled?: boolean;
+        rules?: Array<{
+            label: string;
+            audience?: string;
+            duration: number;
+            maxRequests: number;
+        }>;
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Updates the Trusted Proxy configuration.
+     *
+     * @param config - Trusted proxy configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateTrustedProxy(config: {
+        headers?: Array<string>;
+        useLeftmostIP?: boolean;
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Updates the Logs configuration.
+     *
+     * @param config - Logs configuration updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateLogs(config: {
+        maxDays?: number;
+        minLevel?: number;
+        logIP?: boolean;
+        logAuthId?: boolean;
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    // -------------------------------------------------------------------
+    // Log-Specific Helpers
+    // -------------------------------------------------------------------
+    /**
+     * Gets the current log settings configuration.
+     *
+     * This is a convenience method that returns log configuration,
+     * matching what's shown on the logs settings panel.
+     *
+     * @param options - Optional request options
+     * @returns Object containing log configuration (maxDays, minLevel, logIP, logAuthId)
+     * @throws {ClientResponseError}
+     */
+    getLogSettings(options?: CommonOptions): Promise<{
+        maxDays?: number;
+        minLevel?: number;
+        logIP?: boolean;
+        logAuthId?: boolean;
+    }>;
+    /**
+     * Updates log settings configuration.
+     *
+     * This is a convenience method for managing log configuration:
+     * - Maximum days to retain logs
+     * - Minimum log level
+     * - Whether to log IP addresses
+     * - Whether to log authentication IDs
+     *
+     * @param config - Log settings updates
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    updateLogSettings(config: {
+        maxDays?: number;
+        minLevel?: number;
+        logIP?: boolean;
+        logAuthId?: boolean;
+    }, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Sets the maximum number of days to retain logs.
+     *
+     * @param maxDays - Maximum days to retain logs (0 or greater)
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    setLogRetentionDays(maxDays: number, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Sets the minimum log level.
+     *
+     * Log levels:
+     * - Negative values: Debug/Info levels
+     * - 0: Default/Warning level
+     * - Positive values: Error levels
+     *
+     * Only logs at or above this level will be retained.
+     *
+     * @param minLevel - Minimum log level (-100 to 100)
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    setMinLogLevel(minLevel: number, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Enables or disables IP address logging.
+     *
+     * @param enabled - Whether to log IP addresses
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    setLogIPAddresses(enabled: boolean, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
+    /**
+     * Enables or disables authentication ID logging.
+     *
+     * @param enabled - Whether to log authentication IDs
+     * @param options - Optional request options
+     * @returns Updated settings
+     * @throws {ClientResponseError}
+     */
+    setLogAuthIds(enabled: boolean, options?: CommonOptions): Promise<{
+        [key: string]: any;
+    }>;
 }
 type UnsubscribeFunc = () => Promise<void>;
 declare class RealtimeService extends BaseService {
@@ -947,15 +1499,20 @@ declare class CollectionService extends CrudService<CollectionModel> {
      */
     get baseCrudPath(): string;
     /**
-     * Imports the provided collections.
+     * Deletes a collection (table) by its id or name.
      *
-     * If `deleteMissing` is `true`, all local collections and their fields,
-     * that are not present in the imported configuration, WILL BE DELETED
-     * (including their related records data)!
+     * This is a convenience method that wraps the inherited `delete()` method
+     * to make collection deletion explicit.
      *
+     * **Warning**: This operation is destructive and will delete the collection
+     * along with all its records and associated data.
+     *
+     * @param collectionIdOrName - Collection id or name to delete
+     * @param options - Optional request options
+     * @returns true if deletion succeeds
      * @throws {ClientResponseError}
      */
-    import(collections: Array<CollectionModel>, deleteMissing?: boolean, options?: CommonOptions): Promise<true>;
+    deleteCollection(collectionIdOrName: string, options?: CommonOptions): Promise<boolean>;
     /**
      * Returns type indexed map with scaffolded collection models
      * populated with their default field values.
@@ -966,11 +1523,373 @@ declare class CollectionService extends CrudService<CollectionModel> {
         [key: string]: CollectionModel;
     }>;
     /**
+     * Creates a new collection from a scaffold template.
+     *
+     * This is a convenience method that fetches the scaffold for the specified type
+     * and creates a new collection with the given name, using the scaffold as a base.
+     *
+     * @param type - Collection type: "base", "auth", or "view"
+     * @param name - Collection name
+     * @param overrides - Optional properties to override in the scaffold
+     * @param options - Optional request options
+     * @returns Created collection model
+     * @throws {ClientResponseError}
+     */
+    createFromScaffold(type: "base" | "auth" | "view", name: string, overrides?: Partial<CollectionModel>, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Creates a new base collection.
+     *
+     * Convenience method for creating a base collection type.
+     *
+     * @param name - Collection name
+     * @param overrides - Optional properties to override
+     * @param options - Optional request options
+     * @returns Created collection model
+     * @throws {ClientResponseError}
+     */
+    createBase(name: string, overrides?: Partial<CollectionModel>, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Creates a new auth collection.
+     *
+     * Convenience method for creating an auth collection type.
+     *
+     * @param name - Collection name
+     * @param overrides - Optional properties to override
+     * @param options - Optional request options
+     * @returns Created collection model
+     * @throws {ClientResponseError}
+     */
+    createAuth(name: string, overrides?: Partial<CollectionModel>, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Creates a new view collection.
+     *
+     * Convenience method for creating a view collection type.
+     *
+     * @param name - Collection name
+     * @param viewQuery - SQL query for the view (required for view collections)
+     * @param overrides - Optional properties to override
+     * @param options - Optional request options
+     * @returns Created collection model
+     * @throws {ClientResponseError}
+     */
+    createView(name: string, viewQuery?: string, overrides?: Partial<CollectionModel>, options?: CommonOptions): Promise<CollectionModel>;
+    /**
      * Deletes all records associated with the specified collection.
      *
      * @throws {ClientResponseError}
      */
     truncate(collectionIdOrName: string, options?: CommonOptions): Promise<true>;
+    // -------------------------------------------------------------------
+    // Export/Import Helpers
+    // -------------------------------------------------------------------
+    /**
+     * Exports collections in a format suitable for import.
+     *
+     * This method fetches all collections and prepares them for export by:
+     * - Removing timestamps (created, updated)
+     * - Removing OAuth2 providers (for cleaner export)
+     *
+     * The returned collections can be saved as JSON and later imported.
+     *
+     * @param filterCollections - Optional function to filter which collections to export (by default exports all)
+     * @param options - Optional request options
+     * @returns Array of collection models ready for export
+     * @throws {ClientResponseError}
+     */
+    exportCollections(filterCollections?: (collection: CollectionModel) => boolean, options?: CommonOptions): Promise<Array<CollectionModel>>;
+    /**
+     * Normalizes collections data for import.
+     *
+     * This helper method prepares collections data by:
+     * - Removing timestamps (created, updated)
+     * - Removing duplicate collections by id
+     * - Removing duplicate fields within each collection
+     *
+     * Use this before calling import() to ensure clean data.
+     *
+     * @param collections - Array of collection models to normalize
+     * @returns Normalized array of collections ready for import
+     */
+    normalizeForImport(collections: Array<CollectionModel>): Array<CollectionModel>;
+    /**
+     * Imports the provided collections.
+     *
+     * If `deleteMissing` is `true`, all local collections and their fields,
+     * that are not present in the imported configuration, WILL BE DELETED
+     * (including their related records data)!
+     *
+     * **Warning**: This operation is destructive when `deleteMissing` is true.
+     * It's recommended to call `normalizeForImport()` on the collections
+     * before importing to ensure clean data.
+     *
+     * @param collections - Array of collection models to import
+     * @param deleteMissing - Whether to delete collections not present in the import (default: false)
+     * @param options - Optional request options
+     * @returns true if import succeeds
+     * @throws {ClientResponseError}
+     */
+    import(collections: Array<CollectionModel>, deleteMissing?: boolean, options?: CommonOptions): Promise<true>;
+    // -------------------------------------------------------------------
+    // Field Management Helpers
+    // -------------------------------------------------------------------
+    /**
+     * Adds a new field to the collection.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param field - Field definition (at minimum: name and type)
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError}
+     */
+    addField(collectionIdOrName: string, field: Partial<CollectionField>, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Updates an existing field in the collection.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param fieldName - Name of the field to update
+     * @param updates - Field updates to apply
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError}
+     */
+    updateField(collectionIdOrName: string, fieldName: string, updates: Partial<CollectionField>, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Removes a field from the collection (deletes a table field).
+     *
+     * This method removes a field from the collection schema and automatically
+     * removes any indexes that reference the deleted field.
+     *
+     * **Note**: System fields cannot be removed.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param fieldName - Name of the field to remove
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError} if field not found or if attempting to remove a system field
+     */
+    removeField(collectionIdOrName: string, fieldName: string, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Gets a field by name from the collection.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param fieldName - Name of the field to retrieve
+     * @param options - Optional request options
+     * @returns Field object or undefined if not found
+     * @throws {ClientResponseError}
+     */
+    getField(collectionIdOrName: string, fieldName: string, options?: CommonOptions): Promise<CollectionField | undefined>;
+    // -------------------------------------------------------------------
+    // Index Management Helpers
+    // -------------------------------------------------------------------
+    /**
+     * Adds an index to the collection.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param columns - Array of column names to index
+     * @param unique - Whether the index should be unique (default: false)
+     * @param indexName - Optional custom index name
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError}
+     */
+    addIndex(collectionIdOrName: string, columns: Array<string>, unique?: boolean, indexName?: string, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Removes an index from the collection (deletes a table index).
+     *
+     * This method removes an index that contains all the specified columns.
+     * The index is identified by matching all provided column names.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param columns - Array of column names that identify the index to remove
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError} if index not found
+     */
+    removeIndex(collectionIdOrName: string, columns: Array<string>, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Gets all indexes for the collection.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param options - Optional request options
+     * @returns Array of index strings
+     * @throws {ClientResponseError}
+     */
+    getIndexes(collectionIdOrName: string, options?: CommonOptions): Promise<Array<string>>;
+    // -------------------------------------------------------------------
+    // API Rules Management Helpers
+    // -------------------------------------------------------------------
+    /**
+     * Sets the list rule (read/list access rule) for the collection.
+     *
+     * API Rules are collection access controls and data filters. Each rule can be:
+     * - `null` (locked) - Only superusers can perform the action (default)
+     * - `""` (empty string) - Anyone can perform the action
+     * - Non-empty string - Only users satisfying the filter expression can perform the action
+     *
+     * Rules support filter syntax with operators (=, !=, >, <, ~, etc.), macros (@now, @request.auth.id, etc.),
+     * and modifiers (:isset, :length, :each, :lower).
+     *
+     * Examples:
+     * - Allow only registered users: `"@request.auth.id != \"\""`
+     * - Filter by status: `"status = \"active\""`
+     * - Combine conditions: `"@request.auth.id != \"\" && (status = \"active\" || status = \"pending\")"`
+     * - Filter by relation: `"@request.auth.id != \"\" && author.id ?= @request.auth.id"`
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param rule - Rule expression (use null, empty string, or "" to allow anyone; use non-empty string for filter)
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError}
+     */
+    setListRule(collectionIdOrName: string, rule: string | null, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Sets the view rule (read/view access rule) for the collection.
+     *
+     * See `setListRule` for details on rule syntax and examples.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param rule - Rule expression (use null, empty string, or "" to allow anyone; use non-empty string for filter)
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError}
+     */
+    setViewRule(collectionIdOrName: string, rule: string | null, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Sets the create rule for the collection.
+     *
+     * See `setListRule` for details on rule syntax and examples.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param rule - Rule expression (use null, empty string, or "" to allow anyone; use non-empty string for filter)
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError}
+     */
+    setCreateRule(collectionIdOrName: string, rule: string | null, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Sets the update rule for the collection.
+     *
+     * See `setListRule` for details on rule syntax and examples.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param rule - Rule expression (use null, empty string, or "" to allow anyone; use non-empty string for filter)
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError}
+     */
+    setUpdateRule(collectionIdOrName: string, rule: string | null, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Sets the delete rule for the collection.
+     *
+     * See `setListRule` for details on rule syntax and examples.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param rule - Rule expression (use null, empty string, or "" to allow anyone; use non-empty string for filter)
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError}
+     */
+    setDeleteRule(collectionIdOrName: string, rule: string | null, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Sets all API rules at once for the collection.
+     *
+     * This is a convenience method to update multiple rules in a single operation.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param rules - Object containing rule expressions (listRule, viewRule, createRule, updateRule, deleteRule)
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError}
+     */
+    setRules(collectionIdOrName: string, rules: {
+        listRule?: string | null;
+        viewRule?: string | null;
+        createRule?: string | null;
+        updateRule?: string | null;
+        deleteRule?: string | null;
+    }, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Gets all API rules for the collection.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param options - Optional request options
+     * @returns Object containing all rules (listRule, viewRule, createRule, updateRule, deleteRule)
+     * @throws {ClientResponseError}
+     */
+    getRules(collectionIdOrName: string, options?: CommonOptions): Promise<{
+        listRule?: string;
+        viewRule?: string;
+        createRule?: string;
+        updateRule?: string;
+        deleteRule?: string;
+    }>;
+    /**
+     * Sets the manage rule for an auth collection.
+     *
+     * ManageRule gives admin-like permissions to allow fully managing auth record(s),
+     * e.g. changing password without requiring the old one, directly updating verified state and email, etc.
+     * This rule is executed in addition to the Create and Update API rules.
+     *
+     * Only available for auth collections (type === "auth").
+     *
+     * @param collectionIdOrName - Auth collection id or name
+     * @param rule - Rule expression (use null to remove; empty string is not allowed for manageRule)
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError} if collection is not an auth collection
+     */
+    setManageRule(collectionIdOrName: string, rule: string | null, options?: CommonOptions): Promise<CollectionModel>;
+    /**
+     * Sets the auth rule for an auth collection.
+     *
+     * AuthRule specifies additional record constraints applied after record authentication
+     * and right before returning the auth token response to the client.
+     * For example, to allow only verified users: `"verified = true"`
+     *
+     * Set to empty string to allow any Auth collection record to authenticate.
+     * Set to null to disallow authentication altogether for the collection.
+     *
+     * Only available for auth collections (type === "auth").
+     *
+     * @param collectionIdOrName - Auth collection id or name
+     * @param rule - Rule expression (use null to disallow auth; empty string to allow all; non-empty for filter)
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError} if collection is not an auth collection
+     */
+    setAuthRule(collectionIdOrName: string, rule: string | null, options?: CommonOptions): Promise<CollectionModel>;
+    // -------------------------------------------------------------------
+    // Schema Query Methods
+    // -------------------------------------------------------------------
+    /**
+     * Gets the schema (fields and types) for a single collection.
+     *
+     * This method returns simplified schema information containing only
+     * field names, types, and basic metadata (required, system, hidden flags).
+     * This is useful for AI systems to understand the structure of collections
+     * without fetching the full collection definition.
+     *
+     * @param collectionIdOrName - Collection id or name
+     * @param options - Optional request options
+     * @returns Collection schema information
+     * @throws {ClientResponseError}
+     */
+    getSchema(collectionIdOrName: string, options?: CommonOptions): Promise<CollectionSchemaInfo>;
+    /**
+     * Gets the schema (fields and types) for all collections in the system.
+     *
+     * This method returns simplified schema information for all collections,
+     * containing only field names, types, and basic metadata (required, system, hidden flags).
+     * This is useful for AI systems to understand the overall structure of the system
+     * and all available collections without fetching full collection definitions.
+     *
+     * @param options - Optional request options
+     * @returns Object containing array of collection schemas
+     * @throws {ClientResponseError}
+     */
+    getAllSchemas(options?: CommonOptions): Promise<{
+        collections: Array<CollectionSchemaInfo>;
+    }>;
 }
 interface HourlyStats {
     total: number;
@@ -1170,6 +2089,318 @@ declare class SubBatchService {
     delete(id: string, options?: SendOptions): void;
     private prepareRequest;
 }
+/**
+ * Vector types and interfaces for abstracted vector database support.
+ * This abstraction allows for compatibility with different vector databases.
+ */
+/**
+ * Represents a vector embedding as an array of numbers.
+ */
+type VectorEmbedding = number[];
+/**
+ * Metadata associated with a vector (optional key-value pairs).
+ */
+interface VectorMetadata {
+    [key: string]: any;
+}
+/**
+ * A vector document/record that can be stored and queried.
+ */
+interface VectorDocument {
+    /**
+     * Unique identifier for the vector document.
+     */
+    id?: string;
+    /**
+     * The vector embedding.
+     */
+    vector: VectorEmbedding;
+    /**
+     * Optional metadata to attach to the vector.
+     */
+    metadata?: VectorMetadata;
+    /**
+     * Optional content/text that this vector represents (for display purposes).
+     */
+    content?: string;
+}
+/**
+ * A result from a vector similarity search.
+ */
+interface VectorSearchResult {
+    /**
+     * The vector document that matched.
+     */
+    document: VectorDocument;
+    /**
+     * The similarity score (higher is better, typically 0-1 range).
+     */
+    score: number;
+    /**
+     * Optional distance metric value (lower is better).
+     */
+    distance?: number;
+}
+/**
+ * Options for vector search operations.
+ */
+interface VectorSearchOptions {
+    /**
+     * The query vector to search for.
+     */
+    queryVector: VectorEmbedding;
+    /**
+     * Maximum number of results to return.
+     */
+    limit?: number;
+    /**
+     * Optional filter metadata criteria.
+     */
+    filter?: VectorMetadata;
+    /**
+     * Minimum score threshold (results below this will be filtered out).
+     */
+    minScore?: number;
+    /**
+     * Minimum distance threshold (results above this will be filtered out).
+     */
+    maxDistance?: number;
+    /**
+     * Whether to return distances in addition to scores.
+     */
+    includeDistance?: boolean;
+    /**
+     * Whether to include the full document content.
+     */
+    includeContent?: boolean;
+}
+/**
+ * Options for batch vector insert operations.
+ */
+interface VectorBatchInsertOptions {
+    /**
+     * The vectors to insert.
+     */
+    documents: VectorDocument[];
+    /**
+     * Whether to skip duplicate IDs.
+     */
+    skipDuplicates?: boolean;
+}
+/**
+ * Response from a vector search operation.
+ */
+interface VectorSearchResponse {
+    /**
+     * The search results.
+     */
+    results: VectorSearchResult[];
+    /**
+     * Total number of vectors that matched before limit.
+     */
+    totalMatches?: number;
+    /**
+     * Query execution time in milliseconds.
+     */
+    queryTime?: number;
+}
+/**
+ * Response from a vector insert operation.
+ */
+interface VectorInsertResponse {
+    /**
+     * The inserted document ID (if generated).
+     */
+    id: string;
+    /**
+     * Whether the insert succeeded.
+     */
+    success: boolean;
+}
+/**
+ * Response from a batch vector insert operation.
+ */
+interface VectorBatchInsertResponse {
+    /**
+     * Number of successfully inserted vectors.
+     */
+    insertedCount: number;
+    /**
+     * Number of failed insertions.
+     */
+    failedCount: number;
+    /**
+     * List of inserted document IDs.
+     */
+    ids: string[];
+    /**
+     * List of errors (if any).
+     */
+    errors?: string[];
+}
+interface VectorServiceOptions extends SendOptions {
+    /**
+     * Collection or table name to operate on.
+     */
+    collection?: string;
+}
+/**
+ * VectorService provides an abstracted interface for vector database operations.
+ * This abstraction allows support for multiple vector databases through a unified API.
+ */
+declare class VectorService extends BaseService {
+    /**
+     * Base path for vector operations.
+     */
+    private get baseVectorPath();
+    /**
+     * Collection-specific path.
+     */
+    private getPath;
+    /**
+     * Insert a single vector document.
+     *
+     * @example
+     * ```js
+     * const result = await pb.vectors.insert({
+     *     vector: [0.1, 0.2, 0.3],
+     *     metadata: { category: 'example' },
+     *     content: 'Example text'
+     * }, { collection: 'documents' });
+     * ```
+     */
+    insert(document: VectorDocument, options?: VectorServiceOptions): Promise<VectorInsertResponse>;
+    /**
+     * Insert multiple vector documents in a batch.
+     *
+     * @example
+     * ```js
+     * const result = await pb.vectors.batchInsert({
+     *     documents: [
+     *         { vector: [0.1, 0.2, 0.3], content: 'Example 1' },
+     *         { vector: [0.4, 0.5, 0.6], content: 'Example 2' }
+     *     ],
+     *     skipDuplicates: true
+     * }, { collection: 'documents' });
+     * ```
+     */
+    batchInsert(data: VectorBatchInsertOptions, options?: VectorServiceOptions): Promise<VectorBatchInsertResponse>;
+    /**
+     * Update an existing vector document.
+     *
+     * @example
+     * ```js
+     * const result = await pb.vectors.update('doc_id', {
+     *     vector: [0.1, 0.2, 0.3],
+     *     metadata: { updated: true }
+     * }, { collection: 'documents' });
+     * ```
+     */
+    update(id: string, document: Partial<VectorDocument>, options?: VectorServiceOptions): Promise<VectorInsertResponse>;
+    /**
+     * Delete a vector document by ID.
+     *
+     * @example
+     * ```js
+     * await pb.vectors.delete('doc_id', { collection: 'documents' });
+     * ```
+     */
+    delete(id: string, options?: VectorServiceOptions): Promise<void>;
+    /**
+     * Search for similar vectors.
+     *
+     * @example
+     * ```js
+     * const results = await pb.vectors.search({
+     *     queryVector: [0.1, 0.2, 0.3],
+     *     limit: 10,
+     *     minScore: 0.7
+     * }, { collection: 'documents' });
+     * ```
+     */
+    search(searchOptions: VectorSearchOptions, options?: VectorServiceOptions): Promise<VectorSearchResponse>;
+    /**
+     * Get a vector document by ID.
+     *
+     * @example
+     * ```js
+     * const doc = await pb.vectors.get('doc_id', { collection: 'documents' });
+     * ```
+     */
+    get(id: string, options?: VectorServiceOptions): Promise<VectorDocument>;
+    /**
+     * List all vector documents in a collection (with optional pagination).
+     *
+     * @example
+     * ```js
+     * const docs = await pb.vectors.list({
+     *     page: 1,
+     *     perPage: 100
+     * }, { collection: 'documents' });
+     * ```
+     */
+    list(options?: VectorServiceOptions & {
+        page?: number;
+        perPage?: number;
+    }): Promise<{
+        items: VectorDocument[];
+        page: number;
+        perPage: number;
+        totalItems: number;
+    }>;
+    /**
+     * Create or ensure a vector collection/table exists.
+     *
+     * @example
+     * ```js
+     * await pb.vectors.createCollection('documents', {
+     *     dimension: 384,
+     *     distance: 'cosine'
+     * });
+     * ```
+     */
+    createCollection(name: string, config?: {
+        dimension?: number;
+        distance?: string;
+    }, options?: VectorServiceOptions): Promise<void>;
+    /**
+     * Update a vector collection configuration (distance metric and options).
+     * Note: Collection name and dimension cannot be changed after creation.
+     *
+     * @example
+     * ```js
+     * await pb.vectors.updateCollection('documents', {
+     *     distance: 'l2'  // Change from cosine to L2
+     * });
+     * ```
+     */
+    updateCollection(name: string, config?: {
+        distance?: string;
+        options?: Record<string, any>;
+    }, options?: VectorServiceOptions): Promise<void>;
+    /**
+     * Delete a vector collection/table.
+     *
+     * @example
+     * ```js
+     * await pb.vectors.deleteCollection('documents');
+     * ```
+     */
+    deleteCollection(name: string, options?: VectorServiceOptions): Promise<void>;
+    /**
+     * List all available vector collections.
+     *
+     * @example
+     * ```js
+     * const collections = await pb.vectors.listCollections();
+     * ```
+     */
+    listCollections(options?: VectorServiceOptions): Promise<Array<{
+        name: string;
+        dimension?: number;
+        count?: number;
+    }>>;
+}
 interface BeforeSendResult {
     [key: string]: any;
     url?: string;
@@ -1286,6 +2517,10 @@ declare class Client {
      * An instance of the service that handles the **Cron APIs**.
      */
     readonly crons: CronService;
+    /**
+     * An instance of the service that handles the **Vector APIs**.
+     */
+    readonly vectors: VectorService;
     private cancelControllers;
     private recordServices;
     private enableAutoCancellation;
