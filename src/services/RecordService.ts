@@ -226,6 +226,38 @@ export class RecordService<M = RecordModel> extends CrudService<M> {
     }
 
     /**
+     * Returns the total count of records matching the provided filter.
+     *
+     * This method is optimized to only return the count without fetching
+     * the actual records, making it more efficient when you only need
+     * to know the quantity of matching records.
+     *
+     * @throws {ClientResponseError}
+     */
+    async getCount(filter?: string, options?: RecordListOptions): Promise<number> {
+        options = Object.assign(
+            {
+                method: "GET",
+            },
+            options,
+        );
+
+        options.query = Object.assign(
+            {
+                filter: filter,
+            },
+            options.query,
+        );
+
+        const response = await this.client.send<{ count: number }>(
+            this.baseCrudPath + "/count",
+            options,
+        );
+
+        return response.count;
+    }
+
+    /**
      * @inheritdoc
      */
     async getFirstListItem<T = M>(
