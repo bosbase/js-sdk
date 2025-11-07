@@ -1214,6 +1214,16 @@ declare class RecordService<M = RecordModel> extends CrudService<M> {
      */
     getList<T = M>(page?: number, perPage?: number, options?: RecordListOptions): Promise<ListResult<T>>;
     /**
+     * Returns the total count of records matching the provided filter.
+     *
+     * This method is optimized to only return the count without fetching
+     * the actual records, making it more efficient when you only need
+     * to know the quantity of matching records.
+     *
+     * @throws {ClientResponseError}
+     */
+    getCount(filter?: string, options?: RecordListOptions): Promise<number>;
+    /**
      * @inheritdoc
      */
     getFirstListItem<T = M>(filter: string, options?: RecordListOptions): Promise<T>;
