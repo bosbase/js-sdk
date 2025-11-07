@@ -12,6 +12,7 @@ import { BackupService } from "@/services/BackupService";
 import { CronService } from "@/services/CronService";
 import { BatchService } from "@/services/BatchService";
 import { VectorService } from "@/services/VectorService";
+import { CacheService } from "@/services/CacheService";
 import { RecordModel } from "@/tools/dtos";
 import {
     SendOptions,
@@ -164,6 +165,11 @@ export default class Client {
      */
     readonly vectors: VectorService;
 
+    /**
+     * An instance of the service that handles the **Cache APIs**.
+     */
+    readonly caches: CacheService;
+
     private cancelControllers: { [key: string]: AbortController } = {};
     private recordServices: { [key: string]: RecordService } = {};
     private enableAutoCancellation: boolean = true;
@@ -191,6 +197,7 @@ export default class Client {
         this.backups = new BackupService(this);
         this.crons = new CronService(this);
         this.vectors = new VectorService(this);
+        this.caches = new CacheService(this);
     }
 
     /**
