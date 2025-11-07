@@ -64,6 +64,11 @@ const entry = await pb.caches.getEntry<{
 console.log(entry.source);   // "cache" or "database"
 console.log(entry.expiresAt); // RFC3339 timestamp or undefined
 
+// Renew an entry's TTL without changing its value.
+// This extends the expiration time by the specified TTL (or uses the cache's default TTL if omitted).
+const renewed = await pb.caches.renewEntry("ai-session", "dialog:42", 120); // extend by 120 seconds
+console.log(renewed.expiresAt); // new expiration time
+
 // Delete an entry.
 await pb.caches.deleteEntry("ai-session", "dialog:42");
 ```

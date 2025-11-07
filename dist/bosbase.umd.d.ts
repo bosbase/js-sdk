@@ -2401,6 +2401,67 @@ declare class VectorService extends BaseService {
         count?: number;
     }>>;
 }
+interface CacheConfigSummary {
+    name: string;
+    sizeBytes: number;
+    defaultTTLSeconds: number;
+    readTimeoutMs: number;
+    created: string;
+    updated: string;
+}
+interface CacheEntry<T = any> {
+    cache: string;
+    key: string;
+    value: T;
+    source: "cache" | "database";
+    expiresAt?: string;
+}
+interface CreateCacheBody {
+    name: string;
+    sizeBytes?: number;
+    defaultTTLSeconds?: number;
+    readTimeoutMs?: number;
+}
+interface UpdateCacheBody {
+    sizeBytes?: number;
+    defaultTTLSeconds?: number;
+    readTimeoutMs?: number;
+}
+declare class CacheService extends BaseService {
+    /**
+     * Lists all configured caches.
+     */
+    list(options?: CommonOptions): Promise<CacheConfigSummary[]>;
+    /**
+     * Creates a cache configuration.
+     */
+    create(body: CreateCacheBody, options?: CommonOptions): Promise<CacheConfigSummary>;
+    /**
+     * Updates a cache configuration.
+     */
+    update(name: string, body: UpdateCacheBody, options?: CommonOptions): Promise<CacheConfigSummary>;
+    /**
+     * Deletes a cache.
+     */
+    delete(name: string, options?: CommonOptions): Promise<boolean>;
+    /**
+     * Creates or replaces a cache entry.
+     */
+    setEntry<T = any>(cache: string, key: string, value: T, ttlSeconds?: number, options?: CommonOptions): Promise<CacheEntry<T>>;
+    /**
+     * Reads a cache entry.
+     */
+    getEntry<T = any>(cache: string, key: string, options?: CommonOptions): Promise<CacheEntry<T>>;
+    /**
+     * Renews a cache entry by extending its TTL without changing its value.
+     * If the entry doesn't exist, it will throw an error.
+     */
+    renewEntry<T = any>(cache: string, key: string, ttlSeconds?: number, options?: CommonOptions): Promise<CacheEntry<T>>;
+    /**
+     * Deletes a cache entry.
+     */
+    deleteEntry(cache: string, key: string, options?: CommonOptions): Promise<boolean>;
+}
 interface BeforeSendResult {
     [key: string]: any;
     url?: string;
@@ -2521,6 +2582,10 @@ declare class Client {
      * An instance of the service that handles the **Vector APIs**.
      */
     readonly vectors: VectorService;
+    /**
+     * An instance of the service that handles the **Cache APIs**.
+     */
+    readonly caches: CacheService;
     private cancelControllers;
     private recordServices;
     private enableAutoCancellation;

@@ -2463,6 +2463,71 @@ declare class VectorService extends BaseService {
         count?: number;
     }>>;
 }
+interface CacheConfigSummary {
+    name: string;
+    sizeBytes: number;
+    defaultTTLSeconds: number;
+    readTimeoutMs: number;
+    created: string;
+    updated: string;
+}
+interface CacheEntry<T = any> {
+    cache: string;
+    key: string;
+    value: T;
+    source: "cache" | "database";
+    expiresAt?: string;
+}
+interface CreateCacheBody {
+    name: string;
+    sizeBytes?: number;
+    defaultTTLSeconds?: number;
+    readTimeoutMs?: number;
+}
+interface UpdateCacheBody {
+    sizeBytes?: number;
+    defaultTTLSeconds?: number;
+    readTimeoutMs?: number;
+}
+interface CacheEntryBody<T = any> {
+    value: T;
+    ttlSeconds?: number;
+}
+declare class CacheService extends BaseService {
+    /**
+     * Lists all configured caches.
+     */
+    list(options?: CommonOptions): Promise<CacheConfigSummary[]>;
+    /**
+     * Creates a cache configuration.
+     */
+    create(body: CreateCacheBody, options?: CommonOptions): Promise<CacheConfigSummary>;
+    /**
+     * Updates a cache configuration.
+     */
+    update(name: string, body: UpdateCacheBody, options?: CommonOptions): Promise<CacheConfigSummary>;
+    /**
+     * Deletes a cache.
+     */
+    delete(name: string, options?: CommonOptions): Promise<boolean>;
+    /**
+     * Creates or replaces a cache entry.
+     */
+    setEntry<T = any>(cache: string, key: string, value: T, ttlSeconds?: number, options?: CommonOptions): Promise<CacheEntry<T>>;
+    /**
+     * Reads a cache entry.
+     */
+    getEntry<T = any>(cache: string, key: string, options?: CommonOptions): Promise<CacheEntry<T>>;
+    /**
+     * Renews a cache entry by extending its TTL without changing its value.
+     * If the entry doesn't exist, it will throw an error.
+     */
+    renewEntry<T = any>(cache: string, key: string, ttlSeconds?: number, options?: CommonOptions): Promise<CacheEntry<T>>;
+    /**
+     * Deletes a cache entry.
+     */
+    deleteEntry(cache: string, key: string, options?: CommonOptions): Promise<boolean>;
+}
 interface BeforeSendResult {
     [key: string]: any; // for backward compatibility
     url?: string;
@@ -2583,6 +2648,10 @@ declare class Client {
      * An instance of the service that handles the **Vector APIs**.
      */
     readonly vectors: VectorService;
+    /**
+     * An instance of the service that handles the **Cache APIs**.
+     */
+    readonly caches: CacheService;
     private cancelControllers;
     private recordServices;
     private enableAutoCancellation;
@@ -2834,4 +2903,4 @@ declare function getTokenPayload(token: string): {
  * @param [expirationThreshold] Time in seconds that will be subtracted from the token `exp` property.
  */
 declare function isTokenExpired(token: string, expirationThreshold?: number): boolean;
-export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig };
+export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig };

@@ -140,6 +140,35 @@ export class CacheService extends BaseService {
     }
 
     /**
+     * Renews a cache entry by extending its TTL without changing its value.
+     * If the entry doesn't exist, it will throw an error.
+     */
+    async renewEntry<T = any>(
+        cache: string,
+        key: string,
+        ttlSeconds?: number,
+        options?: CommonOptions,
+    ): Promise<CacheEntry<T>> {
+        const body: { ttlSeconds?: number } = {};
+        if (typeof ttlSeconds === "number") {
+            body.ttlSeconds = ttlSeconds;
+        }
+
+        options = Object.assign(
+            {
+                method: "PATCH",
+                body,
+            },
+            options,
+        );
+
+        return this.client.send(
+            `/api/cache/${encodeURIComponent(cache)}/entries/${encodeURIComponent(key)}`,
+            options,
+        );
+    }
+
+    /**
      * Deletes a cache entry.
      */
     async deleteEntry(
