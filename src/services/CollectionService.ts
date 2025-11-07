@@ -896,4 +896,279 @@ export class CollectionService extends CrudService<CollectionModel> {
             options,
         );
     }
+
+    // -------------------------------------------------------------------
+    // OAuth2 Configuration Methods
+    // -------------------------------------------------------------------
+
+    /**
+     * Enables OAuth2 authentication for an auth collection.
+     * 
+     * @param collectionIdOrName - Auth collection id or name
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError} if collection is not an auth collection
+     */
+    async enableOAuth2(
+        collectionIdOrName: string,
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        const collection = await this.getOne(collectionIdOrName, options);
+        
+        if (collection.type !== "auth") {
+            throw new Error("OAuth2 is only available for auth collections");
+        }
+        
+        const authCollection = collection as any;
+        if (!authCollection.oauth2) {
+            authCollection.oauth2 = { enabled: true, mappedFields: {}, providers: [] };
+        } else {
+            authCollection.oauth2.enabled = true;
+        }
+        
+        return this.update(collectionIdOrName, collection, options);
+    }
+
+    /**
+     * Disables OAuth2 authentication for an auth collection.
+     * 
+     * @param collectionIdOrName - Auth collection id or name
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError} if collection is not an auth collection
+     */
+    async disableOAuth2(
+        collectionIdOrName: string,
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        const collection = await this.getOne(collectionIdOrName, options);
+        
+        if (collection.type !== "auth") {
+            throw new Error("OAuth2 is only available for auth collections");
+        }
+        
+        const authCollection = collection as any;
+        if (authCollection.oauth2) {
+            authCollection.oauth2.enabled = false;
+        }
+        
+        return this.update(collectionIdOrName, collection, options);
+    }
+
+    /**
+     * Gets the OAuth2 configuration for an auth collection.
+     * 
+     * @param collectionIdOrName - Auth collection id or name
+     * @param options - Optional request options
+     * @returns OAuth2 configuration object
+     * @throws {ClientResponseError} if collection is not an auth collection
+     */
+    async getOAuth2Config(
+        collectionIdOrName: string,
+        options?: CommonOptions,
+    ): Promise<{ enabled: boolean; mappedFields: { [key: string]: string }; providers: Array<any> }> {
+        const collection = await this.getOne(collectionIdOrName, options);
+        
+        if (collection.type !== "auth") {
+            throw new Error("OAuth2 is only available for auth collections");
+        }
+        
+        const authCollection = collection as any;
+        return {
+            enabled: authCollection.oauth2?.enabled ?? false,
+            mappedFields: authCollection.oauth2?.mappedFields ?? {},
+            providers: authCollection.oauth2?.providers ?? [],
+        };
+    }
+
+    /**
+     * Sets the OAuth2 mapped fields for an auth collection.
+     * 
+     * Mapped fields define how OAuth2 provider user data maps to collection fields.
+     * For example: { "name": "name", "email": "email", "avatarUrl": "avatar" }
+     * 
+     * @param collectionIdOrName - Auth collection id or name
+     * @param mappedFields - Object mapping OAuth2 fields to collection fields
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError} if collection is not an auth collection
+     */
+    async setOAuth2MappedFields(
+        collectionIdOrName: string,
+        mappedFields: { [key: string]: string },
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        const collection = await this.getOne(collectionIdOrName, options);
+        
+        if (collection.type !== "auth") {
+            throw new Error("OAuth2 is only available for auth collections");
+        }
+        
+        const authCollection = collection as any;
+        if (!authCollection.oauth2) {
+            authCollection.oauth2 = { enabled: false, mappedFields: {}, providers: [] };
+        }
+        authCollection.oauth2.mappedFields = mappedFields;
+        
+        return this.update(collectionIdOrName, collection, options);
+    }
+
+    /**
+     * Adds a new OAuth2 provider to an auth collection.
+     * 
+     * Before using this method, you need to:
+     * 1. Create an OAuth2 app in the provider's dashboard
+     * 2. Get the Client ID and Client Secret
+     * 3. Register a redirect URL (typically: https://yourdomain.com/api/oauth2-redirect)
+     * 
+     * Supported provider names include: "google", "github", "gitlab", "discord", 
+     * "facebook", "microsoft", "apple", "twitter", "spotify", "kakao", "twitch", 
+     * "strava", "vk", "yandex", "patreon", "linkedin", "instagram", "vimeo", 
+     * "digitalocean", "bitbucket", "dropbox", "planningcenter", "notion", "linear", 
+     * "oidc", "oidc2", "oidc3", and more.
+     * 
+     * @param collectionIdOrName - Auth collection id or name
+     * @param provider - OAuth2 provider configuration
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError} if collection is not an auth collection or provider is invalid
+     */
+    async addOAuth2Provider(
+        collectionIdOrName: string,
+        provider: {
+            name: string;
+            clientId: string;
+            clientSecret: string;
+            authURL: string;
+            tokenURL: string;
+            userInfoURL: string;
+            displayName?: string;
+            pkce?: boolean;
+            extra?: { [key: string]: any };
+        },
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        const collection = await this.getOne(collectionIdOrName, options);
+        
+        if (collection.type !== "auth") {
+            throw new Error("OAuth2 is only available for auth collections");
+        }
+        
+        const authCollection = collection as any;
+        if (!authCollection.oauth2) {
+            authCollection.oauth2 = { enabled: false, mappedFields: {}, providers: [] };
+        }
+        
+        // Check if provider with this name already exists
+        const existingProvider = authCollection.oauth2.providers.find(
+            (p: any) => p.name === provider.name
+        );
+        if (existingProvider) {
+            throw new Error(`OAuth2 provider with name "${provider.name}" already exists`);
+        }
+        
+        // Add the new provider
+        authCollection.oauth2.providers.push({
+            name: provider.name,
+            clientId: provider.clientId,
+            clientSecret: provider.clientSecret,
+            authURL: provider.authURL,
+            tokenURL: provider.tokenURL,
+            userInfoURL: provider.userInfoURL,
+            displayName: provider.displayName || provider.name,
+            pkce: provider.pkce,
+            extra: provider.extra,
+        });
+        
+        return this.update(collectionIdOrName, collection, options);
+    }
+
+    /**
+     * Updates an existing OAuth2 provider in an auth collection.
+     * 
+     * @param collectionIdOrName - Auth collection id or name
+     * @param providerName - Name of the provider to update
+     * @param updates - Partial provider configuration to update
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError} if collection is not an auth collection or provider not found
+     */
+    async updateOAuth2Provider(
+        collectionIdOrName: string,
+        providerName: string,
+        updates: Partial<{
+            clientId: string;
+            clientSecret: string;
+            authURL: string;
+            tokenURL: string;
+            userInfoURL: string;
+            displayName: string;
+            pkce: boolean;
+            extra: { [key: string]: any };
+        }>,
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        const collection = await this.getOne(collectionIdOrName, options);
+        
+        if (collection.type !== "auth") {
+            throw new Error("OAuth2 is only available for auth collections");
+        }
+        
+        const authCollection = collection as any;
+        if (!authCollection.oauth2) {
+            throw new Error("OAuth2 is not configured for this collection");
+        }
+        
+        const providerIndex = authCollection.oauth2.providers.findIndex(
+            (p: any) => p.name === providerName
+        );
+        if (providerIndex === -1) {
+            throw new Error(`OAuth2 provider with name "${providerName}" not found`);
+        }
+        
+        // Update the provider
+        const provider = authCollection.oauth2.providers[providerIndex];
+        Object.assign(provider, updates);
+        authCollection.oauth2.providers[providerIndex] = provider;
+        
+        return this.update(collectionIdOrName, collection, options);
+    }
+
+    /**
+     * Removes an OAuth2 provider from an auth collection.
+     * 
+     * @param collectionIdOrName - Auth collection id or name
+     * @param providerName - Name of the provider to remove
+     * @param options - Optional request options
+     * @returns Updated collection model
+     * @throws {ClientResponseError} if collection is not an auth collection or provider not found
+     */
+    async removeOAuth2Provider(
+        collectionIdOrName: string,
+        providerName: string,
+        options?: CommonOptions,
+    ): Promise<CollectionModel> {
+        const collection = await this.getOne(collectionIdOrName, options);
+        
+        if (collection.type !== "auth") {
+            throw new Error("OAuth2 is only available for auth collections");
+        }
+        
+        const authCollection = collection as any;
+        if (!authCollection.oauth2) {
+            throw new Error("OAuth2 is not configured for this collection");
+        }
+        
+        const providerIndex = authCollection.oauth2.providers.findIndex(
+            (p: any) => p.name === providerName
+        );
+        if (providerIndex === -1) {
+            throw new Error(`OAuth2 provider with name "${providerName}" not found`);
+        }
+        
+        // Remove the provider
+        authCollection.oauth2.providers.splice(providerIndex, 1);
+        
+        return this.update(collectionIdOrName, collection, options);
+    }
 }
