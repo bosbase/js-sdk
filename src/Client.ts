@@ -12,6 +12,7 @@ import { BackupService } from "@/services/BackupService";
 import { CronService } from "@/services/CronService";
 import { BatchService } from "@/services/BatchService";
 import { VectorService } from "@/services/VectorService";
+import { LLMDocumentService } from "@/services/LLMDocumentService";
 import { CacheService } from "@/services/CacheService";
 import { RecordModel } from "@/tools/dtos";
 import {
@@ -166,6 +167,11 @@ export default class Client {
     readonly vectors: VectorService;
 
     /**
+     * An instance of the service that handles the **LLM Document APIs**.
+     */
+    readonly llmDocuments: LLMDocumentService;
+
+    /**
      * An instance of the service that handles the **Cache APIs**.
      */
     readonly caches: CacheService;
@@ -197,6 +203,7 @@ export default class Client {
         this.backups = new BackupService(this);
         this.crons = new CronService(this);
         this.vectors = new VectorService(this);
+        this.llmDocuments = new LLMDocumentService(this);
         this.caches = new CacheService(this);
     }
 
