@@ -793,5 +793,37 @@ try {
 
 ---
 
-This guide provides all essential operations for building applications with the BosBase JavaScript SDK. For more detailed information, refer to the specific API documentation files.
+## LangChaingo Recipes
 
+### Quick Completion
+
+```javascript
+const result = await pb.langchaingo.completions({
+  model: { provider: "openai", model: "gpt-4o-mini" },
+  messages: [
+    { role: "system", content: "Answer with one concise line." },
+    { role: "user", content: "Give me a fun fact about Mars." }
+  ],
+  temperature: 0.4
+});
+
+console.log(result.content);
+```
+
+### Retrieval-Augmented Answering
+
+```javascript
+const rag = await pb.langchaingo.rag({
+  collection: "knowledge-base",
+  question: "Why is the sky blue?",
+  topK: 3,
+  returnSources: true
+});
+
+console.log(rag.answer);
+console.log(rag.sources);
+```
+
+---
+
+This guide provides all essential operations for building applications with the BosBase JavaScript SDK. For more detailed information, refer to the specific API documentation files.

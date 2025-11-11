@@ -14,6 +14,7 @@ import { BatchService } from "@/services/BatchService";
 import { VectorService } from "@/services/VectorService";
 import { LLMDocumentService } from "@/services/LLMDocumentService";
 import { CacheService } from "@/services/CacheService";
+import { LangChaingoService } from "@/services/LangChaingoService";
 import { RecordModel } from "@/tools/dtos";
 import {
     SendOptions,
@@ -172,6 +173,11 @@ export default class Client {
     readonly llmDocuments: LLMDocumentService;
 
     /**
+     * An instance of the service that handles the **LangChaingo APIs**.
+     */
+    readonly langchaingo: LangChaingoService;
+
+    /**
      * An instance of the service that handles the **Cache APIs**.
      */
     readonly caches: CacheService;
@@ -204,6 +210,7 @@ export default class Client {
         this.crons = new CronService(this);
         this.vectors = new VectorService(this);
         this.llmDocuments = new LLMDocumentService(this);
+        this.langchaingo = new LangChaingoService(this);
         this.caches = new CacheService(this);
     }
 

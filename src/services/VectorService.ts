@@ -271,7 +271,9 @@ export class VectorService extends BaseService {
      * const collections = await pb.vectors.listCollections();
      * ```
      */
-    async listCollections(options?: VectorServiceOptions): Promise<Array<{ name: string; dimension?: number; count?: number }>> {
+    async listCollections(
+        options?: VectorServiceOptions,
+    ): Promise<Array<{ name: string; dimension?: number; distance?: string; count?: number; id?: string }>> {
         const path = `${this.getPath()}/collections`;
 
         return this.client.send(path, {
@@ -280,4 +282,3 @@ export class VectorService extends BaseService {
         });
     }
 }
-

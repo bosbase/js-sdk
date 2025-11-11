@@ -11,6 +11,7 @@ export * from "@/services/CrudService";
 export * from "@/services/BatchService";
 export * from "@/services/VectorService";
 export * from "@/services/LLMDocumentService";
+export * from "@/services/LangChaingoService";
 export * from "@/services/CacheService";
 export * from "@/stores/AsyncAuthStore";
 export * from "@/stores/BaseAuthStore";
@@ -21,5 +22,6 @@ export * from "@/tools/cookie";
 export * from "@/tools/jwt";
 export * from "@/tools/vector-types";
 export * from "@/tools/llm-types";
+export * from "@/tools/langchaingo-types";
 
 export default Client;
