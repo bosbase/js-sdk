@@ -21,7 +21,7 @@ Auth collections have two additional rules:
 
 Each rule can be set to one of three values:
 
-### 1. `null` (Locked - Default)
+### 1. `null` (Locked)
 Only authorized superusers can perform the action.
 
 ```typescript
@@ -41,6 +41,16 @@ Only users satisfying the filter expression can perform the action.
 ```typescript
 await client.collections.setListRule("products", "@request.auth.id != \"\"");
 ```
+
+## Default Permissions
+
+When you create a base collection without specifying rules, BosBase applies opinionated defaults:
+
+- `listRule` and `viewRule` default to an empty string (`""`), so guests and authenticated users can query records.
+- `createRule` defaults to `@request.auth.id != ""`, restricting writes to authenticated users or superusers.
+- `updateRule` and `deleteRule` default to `@request.auth.id != "" && createdBy = @request.auth.id`, which limits mutations to the record creator (superusers still bypass rules).
+
+Every base collection now includes hidden system fields named `createdBy` and `updatedBy`. BosBase automatically sets `createdBy` when a record is inserted and refreshes `updatedBy` on each authenticated write; anonymous inserts or updates leave the values empty so only superusers can mutate those records later. View collections inherit the public read defaults, and system collections such as `users`, `_superusers`, `_authOrigins`, `_externalAuths`, `_mfas`, and `_otps` keep their custom API rules.
 
 ## Setting Rules
 
@@ -482,4 +492,3 @@ API Rules also act as data filters. When a request doesn't satisfy a rule:
 - **Rules are evaluated server-side** - Client-side validation is not enough
 - **Comments are supported** - Use `//` for single-line comments in rules
 - **System fields protection** - Some fields may be protected regardless of rules
-

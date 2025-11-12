@@ -2524,8 +2524,90 @@ declare class VectorService extends BaseService {
     listCollections(options?: VectorServiceOptions): Promise<Array<{
         name: string;
         dimension?: number;
+        distance?: string;
         count?: number;
+        id?: string;
     }>>;
+}
+/**
+ * Types for LLM document APIs backed by chromem-go.
+ */
+interface LLMDocument {
+    /**
+     * Unique identifier for the document.
+     */
+    id?: string;
+    /**
+     * Source text that embeddings are derived from.
+     */
+    content: string;
+    /**
+     * Optional metadata for filtering.
+     */
+    metadata?: Record<string, string>;
+    /**
+     * Optional embedding vector. If omitted, the server may derive it.
+     */
+    embedding?: number[];
+}
+interface LLMDocumentUpdate {
+    content?: string;
+    metadata?: Record<string, string>;
+    embedding?: number[];
+}
+interface LLMQueryOptions {
+    queryText?: string;
+    queryEmbedding?: number[];
+    limit?: number;
+    where?: Record<string, string>;
+    negative?: {
+        text?: string;
+        embedding?: number[];
+        mode?: string;
+        filterThreshold?: number;
+    };
+}
+interface LLMQueryResult {
+    id: string;
+    content: string;
+    metadata: Record<string, string>;
+    similarity: number;
+}
+interface LLMServiceOptions extends SendOptions {
+    collection: string;
+}
+declare class LLMDocumentService extends BaseService {
+    private get basePath();
+    private collectionsPath;
+    private collectionPath;
+    listCollections(options?: SendOptions): Promise<Array<{
+        name: string;
+        count: number;
+        metadata: Record<string, string>;
+    }>>;
+    createCollection(name: string, metadata?: Record<string, string>, options?: SendOptions): Promise<void>;
+    deleteCollection(name: string, options?: SendOptions): Promise<void>;
+    insert(document: LLMDocument, options: LLMServiceOptions): Promise<{
+        id: string;
+        success: boolean;
+    }>;
+    get(id: string, options: LLMServiceOptions): Promise<LLMDocument>;
+    update(id: string, document: LLMDocumentUpdate, options: LLMServiceOptions): Promise<{
+        success: boolean;
+    }>;
+    delete(id: string, options: LLMServiceOptions): Promise<void>;
+    list(options: LLMServiceOptions & {
+        page?: number;
+        perPage?: number;
+    }): Promise<{
+        items: LLMDocument[];
+        page: number;
+        perPage: number;
+        totalItems: number;
+    }>;
+    query(payload: LLMQueryOptions, options: LLMServiceOptions): Promise<{
+        results: LLMQueryResult[];
+    }>;
 }
 interface CacheConfigSummary {
     name: string;
@@ -2587,6 +2669,77 @@ declare class CacheService extends BaseService {
      * Deletes a cache entry.
      */
     deleteEntry(cache: string, key: string, options?: CommonOptions): Promise<boolean>;
+}
+interface LangChaingoModelConfig {
+    provider?: string;
+    model?: string;
+    apiKey?: string;
+    baseUrl?: string;
+}
+interface LangChaingoCompletionMessage {
+    role?: string;
+    content: string;
+}
+interface LangChaingoCompletionRequest {
+    model?: LangChaingoModelConfig;
+    prompt?: string;
+    messages?: LangChaingoCompletionMessage[];
+    temperature?: number;
+    maxTokens?: number;
+    topP?: number;
+    candidateCount?: number;
+    stop?: string[];
+    json?: boolean;
+}
+interface LangChaingoFunctionCall {
+    name: string;
+    arguments: string;
+}
+interface LangChaingoToolCall {
+    id: string;
+    type: string;
+    functionCall?: LangChaingoFunctionCall;
+}
+interface LangChaingoCompletionResponse {
+    content: string;
+    stopReason?: string;
+    generationInfo?: Record<string, unknown>;
+    functionCall?: LangChaingoFunctionCall;
+    toolCalls?: LangChaingoToolCall[];
+}
+interface LangChaingoRAGFilters {
+    where?: Record<string, string>;
+    whereDocument?: Record<string, string>;
+}
+interface LangChaingoRAGRequest {
+    model?: LangChaingoModelConfig;
+    collection: string;
+    question: string;
+    topK?: number;
+    scoreThreshold?: number;
+    filters?: LangChaingoRAGFilters;
+    promptTemplate?: string;
+    returnSources?: boolean;
+}
+interface LangChaingoSourceDocument {
+    content: string;
+    metadata?: Record<string, unknown>;
+    score?: number;
+}
+interface LangChaingoRAGResponse {
+    answer: string;
+    sources?: LangChaingoSourceDocument[];
+}
+declare class LangChaingoService extends BaseService {
+    private basePath;
+    /**
+     * Invokes `/api/langchaingo/completions`.
+     */
+    completions(payload: LangChaingoCompletionRequest, options?: SendOptions): Promise<LangChaingoCompletionResponse>;
+    /**
+     * Invokes `/api/langchaingo/rag`.
+     */
+    rag(payload: LangChaingoRAGRequest, options?: SendOptions): Promise<LangChaingoRAGResponse>;
 }
 interface BeforeSendResult {
     [key: string]: any;
@@ -2708,6 +2861,14 @@ declare class Client {
      * An instance of the service that handles the **Vector APIs**.
      */
     readonly vectors: VectorService;
+    /**
+     * An instance of the service that handles the **LLM Document APIs**.
+     */
+    readonly llmDocuments: LLMDocumentService;
+    /**
+     * An instance of the service that handles the **LangChaingo APIs**.
+     */
+    readonly langchaingo: LangChaingoService;
     /**
      * An instance of the service that handles the **Cache APIs**.
      */
