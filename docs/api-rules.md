@@ -50,7 +50,7 @@ When you create a base collection without specifying rules, BosBase applies opin
 - `createRule` defaults to `@request.auth.id != ""`, restricting writes to authenticated users or superusers.
 - `updateRule` and `deleteRule` default to `@request.auth.id != "" && createdBy = @request.auth.id`, which limits mutations to the record creator (superusers still bypass rules).
 
-Every base collection now includes hidden system fields named `createdBy` and `updatedBy`. BosBase automatically sets `createdBy` when a record is inserted and refreshes `updatedBy` on each authenticated write; anonymous inserts or updates leave the values empty so only superusers can mutate those records later. View collections inherit the public read defaults, and system collections such as `users`, `_superusers`, `_authOrigins`, `_externalAuths`, `_mfas`, and `_otps` keep their custom API rules.
+Every base collection now includes hidden system fields named `createdBy` and `updatedBy`. BosBase adds those fields automatically when a collection is created and manages their values server-side: `createdBy` always captures the authenticated actor that inserted the record (or stays empty for anonymous writes) and cannot be overridden later, while `updatedBy` is overwritten on each write (or cleared for anonymous writes). View collections inherit the public read defaults, and system collections such as `users`, `_superusers`, `_authOrigins`, `_externalAuths`, `_mfas`, and `_otps` keep their custom API rules.
 
 ## Setting Rules
 
