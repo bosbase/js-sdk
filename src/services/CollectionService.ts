@@ -607,7 +607,7 @@ export class CollectionService extends CrudService<CollectionModel> {
         options?: CommonOptions,
     ): Promise<CollectionModel> {
         const collection = await this.getOne(collectionIdOrName, options);
-        collection.listRule = rule || undefined;
+        collection.listRule = rule as any;
         return this.update(collectionIdOrName, collection, options);
     }
 
@@ -628,7 +628,7 @@ export class CollectionService extends CrudService<CollectionModel> {
         options?: CommonOptions,
     ): Promise<CollectionModel> {
         const collection = await this.getOne(collectionIdOrName, options);
-        collection.viewRule = rule || undefined;
+        collection.viewRule = rule as any;
         return this.update(collectionIdOrName, collection, options);
     }
 
@@ -649,7 +649,7 @@ export class CollectionService extends CrudService<CollectionModel> {
         options?: CommonOptions,
     ): Promise<CollectionModel> {
         const collection = await this.getOne(collectionIdOrName, options);
-        collection.createRule = rule || undefined;
+        collection.createRule = rule as any;
         return this.update(collectionIdOrName, collection, options);
     }
 
@@ -670,7 +670,7 @@ export class CollectionService extends CrudService<CollectionModel> {
         options?: CommonOptions,
     ): Promise<CollectionModel> {
         const collection = await this.getOne(collectionIdOrName, options);
-        collection.updateRule = rule || undefined;
+        collection.updateRule = rule as any;
         return this.update(collectionIdOrName, collection, options);
     }
 
@@ -691,7 +691,7 @@ export class CollectionService extends CrudService<CollectionModel> {
         options?: CommonOptions,
     ): Promise<CollectionModel> {
         const collection = await this.getOne(collectionIdOrName, options);
-        collection.deleteRule = rule || undefined;
+        collection.deleteRule = rule as any;
         return this.update(collectionIdOrName, collection, options);
     }
 
@@ -719,20 +719,20 @@ export class CollectionService extends CrudService<CollectionModel> {
     ): Promise<CollectionModel> {
         const collection = await this.getOne(collectionIdOrName, options);
         
-        if (rules.listRule !== undefined) {
-            collection.listRule = rules.listRule || undefined;
+        if (Object.prototype.hasOwnProperty.call(rules, "listRule")) {
+            collection.listRule = rules.listRule as any;
         }
-        if (rules.viewRule !== undefined) {
-            collection.viewRule = rules.viewRule || undefined;
+        if (Object.prototype.hasOwnProperty.call(rules, "viewRule")) {
+            collection.viewRule = rules.viewRule as any;
         }
-        if (rules.createRule !== undefined) {
-            collection.createRule = rules.createRule || undefined;
+        if (Object.prototype.hasOwnProperty.call(rules, "createRule")) {
+            collection.createRule = rules.createRule as any;
         }
-        if (rules.updateRule !== undefined) {
-            collection.updateRule = rules.updateRule || undefined;
+        if (Object.prototype.hasOwnProperty.call(rules, "updateRule")) {
+            collection.updateRule = rules.updateRule as any;
         }
-        if (rules.deleteRule !== undefined) {
-            collection.deleteRule = rules.deleteRule || undefined;
+        if (Object.prototype.hasOwnProperty.call(rules, "deleteRule")) {
+            collection.deleteRule = rules.deleteRule as any;
         }
         
         return this.update(collectionIdOrName, collection, options);
@@ -794,7 +794,7 @@ export class CollectionService extends CrudService<CollectionModel> {
         
         // AuthCollectionModel has manageRule as a direct property
         const authCollection = collection as any;
-        authCollection.manageRule = rule || undefined;
+        authCollection.manageRule = rule as any;
         
         return this.update(collectionIdOrName, collection, options);
     }
@@ -830,7 +830,7 @@ export class CollectionService extends CrudService<CollectionModel> {
         
         // AuthCollectionModel has authRule as a direct property
         const authCollection = collection as any;
-        authCollection.authRule = rule || undefined;
+        authCollection.authRule = rule as any;
         
         return this.update(collectionIdOrName, collection, options);
     }

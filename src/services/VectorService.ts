@@ -29,6 +29,17 @@ export class VectorService extends BaseService {
     }
 
     /**
+     * Ensures a collection name is provided for collection-scoped endpoints.
+     */
+    private requireCollection(options?: VectorServiceOptions): string {
+        const collection = options?.collection;
+        if (!collection) {
+            throw new Error("collection is required for this operation");
+        }
+        return collection;
+    }
+
+    /**
      * Collection-specific path.
      */
     private getPath(collection?: string): string {
@@ -54,7 +65,7 @@ export class VectorService extends BaseService {
         document: VectorDocument,
         options?: VectorServiceOptions,
     ): Promise<VectorInsertResponse> {
-        const path = this.getPath(options?.collection);
+        const path = this.getPath(this.requireCollection(options));
 
         return this.client.send<VectorInsertResponse>(path, {
             method: "POST",
@@ -81,7 +92,7 @@ export class VectorService extends BaseService {
         data: VectorBatchInsertOptions,
         options?: VectorServiceOptions,
     ): Promise<VectorBatchInsertResponse> {
-        const path = `${this.getPath(options?.collection)}/documents/batch`;
+        const path = `${this.getPath(this.requireCollection(options))}/documents/batch`;
 
         return this.client.send<VectorBatchInsertResponse>(path, {
             method: "POST",
@@ -106,7 +117,7 @@ export class VectorService extends BaseService {
         document: Partial<VectorDocument>,
         options?: VectorServiceOptions,
     ): Promise<VectorInsertResponse> {
-        const path = `${this.getPath(options?.collection)}/${encodeURIComponent(id)}`;
+        const path = `${this.getPath(this.requireCollection(options))}/${encodeURIComponent(id)}`;
 
         return this.client.send<VectorInsertResponse>(path, {
             method: "PATCH",
@@ -124,7 +135,7 @@ export class VectorService extends BaseService {
      * ```
      */
     async delete(id: string, options?: VectorServiceOptions): Promise<void> {
-        const path = `${this.getPath(options?.collection)}/${encodeURIComponent(id)}`;
+        const path = `${this.getPath(this.requireCollection(options))}/${encodeURIComponent(id)}`;
 
         await this.client.send(path, {
             method: "DELETE",
@@ -148,7 +159,7 @@ export class VectorService extends BaseService {
         searchOptions: VectorSearchOptions,
         options?: VectorServiceOptions,
     ): Promise<VectorSearchResponse> {
-        const path = `${this.getPath(options?.collection)}/documents/search`;
+        const path = `${this.getPath(this.requireCollection(options))}/documents/search`;
 
         return this.client.send<VectorSearchResponse>(path, {
             method: "POST",
@@ -166,7 +177,7 @@ export class VectorService extends BaseService {
      * ```
      */
     async get(id: string, options?: VectorServiceOptions): Promise<VectorDocument> {
-        const path = `${this.getPath(options?.collection)}/${encodeURIComponent(id)}`;
+        const path = `${this.getPath(this.requireCollection(options))}/${encodeURIComponent(id)}`;
 
         return this.client.send<VectorDocument>(path, {
             method: "GET",
@@ -188,10 +199,16 @@ export class VectorService extends BaseService {
     async list(
         options?: VectorServiceOptions & { page?: number; perPage?: number },
     ): Promise<{ items: VectorDocument[]; page: number; perPage: number; totalItems: number }> {
-        const path = this.getPath(options?.collection);
+        const collection = this.requireCollection(options);
+        const path = this.getPath(collection);
 
         return this.client.send(path, {
             method: "GET",
+            query: {
+                page: options?.page,
+                perPage: options?.perPage,
+                ...(options?.query ?? {}),
+            },
             ...options,
         });
     }
