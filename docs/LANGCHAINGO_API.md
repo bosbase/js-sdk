@@ -78,6 +78,8 @@ await pb.langchaingo.rag({
 
 ### LLM Document Queries
 
+> **Note**: This interface is only available to superusers.
+
 When you want to pose a question to a specific `llmDocuments` collection and have LangChaingo+OpenAI synthesize an answer, use `queryDocuments`. It mirrors the RAG arguments but takes a `query` field:
 
 ```ts
@@ -94,7 +96,13 @@ console.log(response.sources);
 
 ### SQL Generation + Execution
 
-Superuser tokens (`_superusers` records) can ask LangChaingo to have OpenAI propose a SQL statement, execute it, and return both the generated SQL and execution output. Requests authenticated with regular `users` tokens return a `401 Unauthorized`.
+> **Important Notes**:
+> - This interface is only available to superusers. Requests authenticated with regular `users` tokens return a `401 Unauthorized`.
+> - It is recommended to execute query statements (SELECT) only.
+> - **Do not use this interface for adding or modifying table structures.** Collection interfaces should be used instead for managing database schema.
+> - Directly using this interface for initializing table structures and adding or modifying database tables will cause errors that prevent the automatic generation of APIs.
+
+Superuser tokens (`_superusers` records) can ask LangChaingo to have OpenAI propose a SQL statement, execute it, and return both the generated SQL and execution output.
 
 ```ts
 const result = await pb.langchaingo.sql({
