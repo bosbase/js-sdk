@@ -2380,6 +2380,10 @@ declare class VectorService extends BaseService {
      */
     private get baseVectorPath();
     /**
+     * Ensures a collection name is provided for collection-scoped endpoints.
+     */
+    private requireCollection;
+    /**
      * Collection-specific path.
      */
     private getPath;
@@ -2730,6 +2734,30 @@ interface LangChaingoRAGResponse {
     answer: string;
     sources?: LangChaingoSourceDocument[];
 }
+interface LangChaingoDocumentQueryRequest {
+    model?: LangChaingoModelConfig;
+    collection: string;
+    query: string;
+    topK?: number;
+    scoreThreshold?: number;
+    filters?: LangChaingoRAGFilters;
+    promptTemplate?: string;
+    returnSources?: boolean;
+}
+type LangChaingoDocumentQueryResponse = LangChaingoRAGResponse;
+interface LangChaingoSQLRequest {
+    model?: LangChaingoModelConfig;
+    query: string;
+    tables?: string[];
+    topK?: number;
+}
+interface LangChaingoSQLResponse {
+    sql: string;
+    answer: string;
+    columns?: string[];
+    rows?: string[][];
+    rawResult?: string;
+}
 declare class LangChaingoService extends BaseService {
     private basePath;
     /**
@@ -2740,6 +2768,14 @@ declare class LangChaingoService extends BaseService {
      * Invokes `/api/langchaingo/rag`.
      */
     rag(payload: LangChaingoRAGRequest, options?: SendOptions): Promise<LangChaingoRAGResponse>;
+    /**
+     * Invokes `/api/langchaingo/documents/query`.
+     */
+    queryDocuments(payload: LangChaingoDocumentQueryRequest, options?: SendOptions): Promise<LangChaingoDocumentQueryResponse>;
+    /**
+     * Invokes `/api/langchaingo/sql`.
+     */
+    sql(payload: LangChaingoSQLRequest, options?: SendOptions): Promise<LangChaingoSQLResponse>;
 }
 interface BeforeSendResult {
     [key: string]: any;
