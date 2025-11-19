@@ -2,14 +2,15 @@
 
 BosBase exposes the `/api/langchaingo` endpoints so you can run LangChainGo powered workflows without leaving the platform. The JS SDK wraps these endpoints with the `pb.langchaingo` service.
 
-The service exposes two high-level methods:
+The service exposes three high-level methods:
 
 | Method | HTTP Endpoint | Description |
 | --- | --- | --- |
 | `pb.langchaingo.completions()` | `POST /api/langchaingo/completions` | Runs a chat/completion call using the configured LLM provider. |
 | `pb.langchaingo.rag()` | `POST /api/langchaingo/rag` | Runs a retrieval-augmented generation pass over an `llmDocuments` collection. |
+| `pb.langchaingo.queryDocuments()` | `POST /api/langchaingo/documents/query` | Asks an OpenAI-backed chain to answer questions over `llmDocuments` and optionally return matched sources. |
 
-Both methods accept an optional `model` block:
+Each method accepts an optional `model` block:
 
 ```ts
 interface LangChaingoModelConfig {
@@ -72,6 +73,22 @@ await pb.langchaingo.rag({
     question: "Summarize the explanation below in 2 sentences.",
     promptTemplate: `Context:\n{{.context}}\n\nQuestion: {{.question}}\nSummary:`,
 });
+```
+
+### LLM Document Queries
+
+When you want to pose a question to a specific `llmDocuments` collection and have LangChaingo+OpenAI synthesize an answer, use `queryDocuments`. It mirrors the RAG arguments but takes a `query` field:
+
+```ts
+const response = await pb.langchaingo.queryDocuments({
+    collection: "knowledge-base",
+    query: "List three bullet points about Rayleigh scattering.",
+    topK: 3,
+    returnSources: true,
+});
+
+console.log(response.answer);
+console.log(response.sources);
 ```
 
 ### Dart SDK

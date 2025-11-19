@@ -5,6 +5,8 @@ import {
     LangChaingoCompletionResponse,
     LangChaingoRAGRequest,
     LangChaingoRAGResponse,
+    LangChaingoDocumentQueryRequest,
+    LangChaingoDocumentQueryResponse,
 } from "@/tools/langchaingo-types";
 
 export class LangChaingoService extends BaseService {
@@ -34,6 +36,20 @@ export class LangChaingoService extends BaseService {
         options: SendOptions = {},
     ): Promise<LangChaingoRAGResponse> {
         return this.client.send(`${this.basePath()}/rag`, {
+            method: "POST",
+            body: payload,
+            ...options,
+        });
+    }
+
+    /**
+     * Invokes `/api/langchaingo/documents/query`.
+     */
+    async queryDocuments(
+        payload: LangChaingoDocumentQueryRequest,
+        options: SendOptions = {},
+    ): Promise<LangChaingoDocumentQueryResponse> {
+        return this.client.send(`${this.basePath()}/documents/query`, {
             method: "POST",
             body: payload,
             ...options,

@@ -67,3 +67,16 @@ export interface LangChaingoRAGResponse {
     answer: string;
     sources?: LangChaingoSourceDocument[];
 }
+
+export interface LangChaingoDocumentQueryRequest {
+    model?: LangChaingoModelConfig;
+    collection: string;
+    query: string;
+    topK?: number;
+    scoreThreshold?: number;
+    filters?: LangChaingoRAGFilters;
+    promptTemplate?: string;
+    returnSources?: boolean;
+}
+
+export type LangChaingoDocumentQueryResponse = LangChaingoRAGResponse;
