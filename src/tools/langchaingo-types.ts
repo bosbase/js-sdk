@@ -80,3 +80,18 @@ export interface LangChaingoDocumentQueryRequest {
 }
 
 export type LangChaingoDocumentQueryResponse = LangChaingoRAGResponse;
+
+export interface LangChaingoSQLRequest {
+    model?: LangChaingoModelConfig;
+    query: string;
+    tables?: string[];
+    topK?: number;
+}
+
+export interface LangChaingoSQLResponse {
+    sql: string;
+    answer: string;
+    columns?: string[];
+    rows?: string[][];
+    rawResult?: string;
+}

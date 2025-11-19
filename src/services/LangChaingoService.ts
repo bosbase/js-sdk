@@ -7,6 +7,8 @@ import {
     LangChaingoRAGResponse,
     LangChaingoDocumentQueryRequest,
     LangChaingoDocumentQueryResponse,
+    LangChaingoSQLRequest,
+    LangChaingoSQLResponse,
 } from "@/tools/langchaingo-types";
 
 export class LangChaingoService extends BaseService {
@@ -50,6 +52,20 @@ export class LangChaingoService extends BaseService {
         options: SendOptions = {},
     ): Promise<LangChaingoDocumentQueryResponse> {
         return this.client.send(`${this.basePath()}/documents/query`, {
+            method: "POST",
+            body: payload,
+            ...options,
+        });
+    }
+
+    /**
+     * Invokes `/api/langchaingo/sql`.
+     */
+    async sql(
+        payload: LangChaingoSQLRequest,
+        options: SendOptions = {},
+    ): Promise<LangChaingoSQLResponse> {
+        return this.client.send(`${this.basePath()}/sql`, {
             method: "POST",
             body: payload,
             ...options,

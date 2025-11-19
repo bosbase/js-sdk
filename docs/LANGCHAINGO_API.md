@@ -2,13 +2,14 @@
 
 BosBase exposes the `/api/langchaingo` endpoints so you can run LangChainGo powered workflows without leaving the platform. The JS SDK wraps these endpoints with the `pb.langchaingo` service.
 
-The service exposes three high-level methods:
+The service exposes four high-level methods:
 
 | Method | HTTP Endpoint | Description |
 | --- | --- | --- |
 | `pb.langchaingo.completions()` | `POST /api/langchaingo/completions` | Runs a chat/completion call using the configured LLM provider. |
 | `pb.langchaingo.rag()` | `POST /api/langchaingo/rag` | Runs a retrieval-augmented generation pass over an `llmDocuments` collection. |
 | `pb.langchaingo.queryDocuments()` | `POST /api/langchaingo/documents/query` | Asks an OpenAI-backed chain to answer questions over `llmDocuments` and optionally return matched sources. |
+| `pb.langchaingo.sql()` | `POST /api/langchaingo/sql` | Lets OpenAI draft and execute SQL against your BosBase database, then returns the results. |
 
 Each method accepts an optional `model` block:
 
@@ -90,6 +91,24 @@ const response = await pb.langchaingo.queryDocuments({
 console.log(response.answer);
 console.log(response.sources);
 ```
+
+### SQL Generation + Execution
+
+Superuser tokens (`_superusers` records) can ask LangChaingo to have OpenAI propose a SQL statement, execute it, and return both the generated SQL and execution output. Requests authenticated with regular `users` tokens return a `401 Unauthorized`.
+
+```ts
+const result = await pb.langchaingo.sql({
+    query: "Add a demo project row if it doesn't exist, then list the 5 most recent projects.",
+    tables: ["projects"], // optional hint to limit which tables the model sees
+    topK: 5,
+});
+
+console.log(result.sql);    // Generated SQL
+console.log(result.answer); // Model's summary of the execution
+console.log(result.columns, result.rows);
+```
+
+Use `tables` to restrict which table definitions and sample rows are passed to the model, and `topK` to control how many rows the model should target when building queries. You can also pass the optional `model` block described above to override the default OpenAI model or key for this call.
 
 ### Dart SDK
 
