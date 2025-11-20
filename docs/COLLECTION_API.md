@@ -399,6 +399,47 @@ collection.authToken.duration = 2592000; // 30 days
 await pb.collections.update('users', collection);
 ```
 
+## Manage Indexes
+
+BosBase stores collection indexes as SQL expressions on the `indexes` property of a collection. The JS SDK provides dedicated helpers so you don't have to manually craft the SQL or resend the full collection payload every time you want to adjust an index.
+
+### Add or Update Indexes
+
+```javascript
+// Create a unique slug index (index names are optional)
+await pb.collections.addIndex('posts', ['slug'], true, 'idx_posts_slug_unique');
+
+// Composite (non-unique) index; defaults to idx_{collection}_{columns}
+await pb.collections.addIndex('posts', ['status', 'published']);
+```
+
+- `collectionIdOrName` can be either the collection name or internal id.
+- `columns` must reference existing columns (system fields such as `id`, `created`, and `updated` are allowed).
+- `unique` (default `false`) controls whether `CREATE UNIQUE INDEX` or `CREATE INDEX` is generated.
+- `indexName` is optional; omit it to let the SDK generate `idx_{collection}_{column1}_{column2}` automatically.
+
+Calling `addIndex` twice with the same name replaces the definition on the backend, making it easy to iterate on your schema.
+
+### Remove Indexes
+
+```javascript
+// Remove the index that targets the slug column
+await pb.collections.removeIndex('posts', ['slug']);
+```
+
+`removeIndex` looks for indexes that contain all of the provided columns (in any order) and drops them from the collection. This deletes the actual database index when the collection is saved.
+
+### List Indexes
+
+```javascript
+const indexes = await pb.collections.getIndexes('posts');
+
+indexes.forEach(idx => console.log(idx));
+// => CREATE UNIQUE INDEX `idx_posts_slug_unique` ON `posts` (`slug`)
+```
+
+`getIndexes` returns the raw SQL strings stored on the collection so you can audit existing indexes or decide whether you need to create new ones.
+
 ## Delete Collection
 
 Delete a collection (including all records and files):
