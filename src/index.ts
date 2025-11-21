@@ -13,6 +13,7 @@ export * from "@/services/VectorService";
 export * from "@/services/LLMDocumentService";
 export * from "@/services/LangChaingoService";
 export * from "@/services/CacheService";
+export * from "@/services/GraphQLService";
 export * from "@/stores/AsyncAuthStore";
 export * from "@/stores/BaseAuthStore";
 export * from "@/stores/LocalAuthStore";

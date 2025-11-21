@@ -15,6 +15,7 @@ import { VectorService } from "@/services/VectorService";
 import { LLMDocumentService } from "@/services/LLMDocumentService";
 import { CacheService } from "@/services/CacheService";
 import { LangChaingoService } from "@/services/LangChaingoService";
+import { GraphQLService } from "@/services/GraphQLService";
 import { RecordModel } from "@/tools/dtos";
 import {
     SendOptions,
@@ -182,6 +183,11 @@ export default class Client {
      */
     readonly caches: CacheService;
 
+    /**
+     * An instance of the service that handles **GraphQL queries**.
+     */
+    readonly graphql: GraphQLService;
+
     private cancelControllers: { [key: string]: AbortController } = {};
     private recordServices: { [key: string]: RecordService } = {};
     private enableAutoCancellation: boolean = true;
@@ -212,6 +218,7 @@ export default class Client {
         this.llmDocuments = new LLMDocumentService(this);
         this.langchaingo = new LangChaingoService(this);
         this.caches = new CacheService(this);
+        this.graphql = new GraphQLService(this);
     }
 
     /**

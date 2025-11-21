@@ -40,6 +40,7 @@ describe("Client", function () {
                 "logs",
                 "settings",
                 "realtime",
+                "graphql",
             ];
 
             for (const service of baseServices) {
