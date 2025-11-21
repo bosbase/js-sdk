@@ -5,7 +5,7 @@ Official JavaScript SDK (browser and node) for interacting with the [BosBase API
 
 - [Installation](#installation)
 - [Usage](#usage)
-- [GraphQL queries](#graphql-queries)
+- [GraphQL guide](GRAPHQL.md)
 - [Caveats](#caveats)
     - [Binding filter parameters](#binding-filter-parameters)
     - [File upload](#file-upload)
@@ -99,64 +99,7 @@ const result = await pb.collection('example').getList(1, 20, {
 
 // and much more...
 ```
-> More detailed API docs and copy-paste examples could be found in the [API documentation for each service](https://docs.bosbase.com/docs/api-records/).
-
-## GraphQL queries
-
-Use `pb.graphql.query()` to call `/api/graphql` with your current auth token. It returns `{ data, errors, extensions }`.
-
-- **Single-table query**
-    ```js
-    const query = `
-      query ActiveUsers($limit: Int!) {
-        records(collection: "users", perPage: $limit, filter: "status = true") {
-          items { id data }
-        }
-      }
-    `;
-
-    const { data, errors } = await pb.graphql.query(query, { limit: 5 });
-    ```
-
-- **Multi-table join via expands**
-    ```js
-    const query = `
-      query PostsWithAuthors {
-        records(
-          collection: "posts",
-          expand: ["author", "author.profile"],
-          sort: "-created"
-        ) {
-          items {
-            id
-            data  // expanded relations live under data.expand
-          }
-        }
-      }
-    `;
-
-    const { data } = await pb.graphql.query(query);
-    ```
-
-- **Conditional query with variables**
-    ```js
-    const query = `
-      query FilteredOrders($minTotal: Float!, $state: String!) {
-        records(
-          collection: "orders",
-          filter: "total >= $minTotal && status = $state",
-          sort: "created"
-        ) {
-          items { id data }
-        }
-      }
-    `;
-
-    const variables = { minTotal: 100, state: "paid" };
-    const result = await pb.graphql.query(query, variables);
-    ```
-
-Use the `filter`, `sort`, `page`, `perPage`, and `expand` arguments to mirror REST list behavior while keeping query logic in GraphQL.
+> More detailed API docs and copy-paste examples could be found in the [API documentation for each service](https://docs.bosbase.com/docs/api-records/). For GraphQL usage, see the dedicated [GraphQL guide](GRAPHQL.md).
 
 
 ## Caveats
