@@ -2777,6 +2777,21 @@ declare class LangChaingoService extends BaseService {
      */
     sql(payload: LangChaingoSQLRequest, options?: SendOptions): Promise<LangChaingoSQLResponse>;
 }
+interface GraphQLResponse<T = any> {
+    data?: T;
+    errors?: Array<{
+        message: string;
+        [key: string]: any;
+    }>;
+    extensions?: Record<string, any>;
+}
+interface GraphQLRequestOptions extends SendOptions {
+    operationName?: string;
+    variables?: Record<string, any>;
+}
+declare class GraphQLService extends BaseService {
+    query<T = any>(query: string, variables?: Record<string, any> | null, options?: GraphQLRequestOptions): Promise<GraphQLResponse<T>>;
+}
 interface BeforeSendResult {
     [key: string]: any;
     url?: string;
@@ -2909,6 +2924,10 @@ declare class Client {
      * An instance of the service that handles the **Cache APIs**.
      */
     readonly caches: CacheService;
+    /**
+     * An instance of the service that handles **GraphQL queries**.
+     */
+    readonly graphql: GraphQLService;
     private cancelControllers;
     private recordServices;
     private enableAutoCancellation;
