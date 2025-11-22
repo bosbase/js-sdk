@@ -6,6 +6,7 @@ export * from "@/services/CollectionService";
 export * from "@/services/HealthService";
 export * from "@/services/LogService";
 export * from "@/services/RealtimeService";
+export * from "@/services/PubSubService";
 export * from "@/services/RecordService";
 export * from "@/services/CrudService";
 export * from "@/services/BatchService";

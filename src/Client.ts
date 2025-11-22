@@ -16,6 +16,7 @@ import { LLMDocumentService } from "@/services/LLMDocumentService";
 import { CacheService } from "@/services/CacheService";
 import { LangChaingoService } from "@/services/LangChaingoService";
 import { GraphQLService } from "@/services/GraphQLService";
+import { PubSubService } from "@/services/PubSubService";
 import { RecordModel } from "@/tools/dtos";
 import {
     SendOptions,
@@ -149,6 +150,11 @@ export default class Client {
     readonly realtime: RealtimeService;
 
     /**
+     * An instance of the service that handles the **WebSocket pub/sub APIs**.
+     */
+    readonly pubsub: PubSubService;
+
+    /**
      * An instance of the service that handles the **Health APIs**.
      */
     readonly health: HealthService;
@@ -211,6 +217,7 @@ export default class Client {
         this.logs = new LogService(this);
         this.settings = new SettingsService(this);
         this.realtime = new RealtimeService(this);
+        this.pubsub = new PubSubService(this);
         this.health = new HealthService(this);
         this.backups = new BackupService(this);
         this.crons = new CronService(this);
