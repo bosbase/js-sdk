@@ -3,7 +3,7 @@
 BosBase now exposes a lightweight WebSocket-based publish/subscribe channel so SDK users can push and receive custom messages. The Go backend uses the `ws` transport and persists each published payload in the `_pubsub_messages` table so every node in a cluster can replay and fan-out messages to its local subscribers.
 
 - Endpoint: `/api/pubsub` (WebSocket)
-- Auth: the SDK automatically forwards `authStore.token` as a `token` query parameter; cookie-based auth also works.
+- Auth: the SDK automatically forwards `authStore.token` as a `token` query parameter; cookie-based auth also works. Anonymous clients may subscribe, but publishing requires an authenticated token.
 - Reliability: automatic reconnect with topic re-subscription; messages are stored in the database and broadcasted to all connected nodes.
 
 ## Quick Start
