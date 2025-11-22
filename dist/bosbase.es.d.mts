@@ -2858,6 +2858,68 @@ interface GraphQLRequestOptions extends SendOptions {
 declare class GraphQLService extends BaseService {
     query<T = any>(query: string, variables?: Record<string, any> | null, options?: GraphQLRequestOptions): Promise<GraphQLResponse<T>>;
 }
+interface PubSubMessage<T = any> {
+    id: string;
+    topic: string;
+    created: string;
+    data: T;
+}
+interface PublishAck {
+    id: string;
+    topic: string;
+    created: string;
+}
+declare class PubSubService extends BaseService {
+    private socket;
+    private pendingConnects;
+    private pendingAcks;
+    private subscriptions;
+    private reconnectAttempts;
+    private reconnectTimeoutId;
+    private connectTimeoutId;
+    private manualClose;
+    private readonly maxConnectTimeout;
+    private readonly ackTimeoutMs;
+    private readonly predefinedReconnectIntervals;
+    private readonly maxReconnectAttempts;
+    constructor(client: Client);
+    /**
+     * Indicates whether the websocket is connected.
+     */
+    get isConnected(): boolean;
+    /**
+     * Publish a message to a topic. Resolves when the server acknowledges it.
+     */
+    publish<T = any>(topic: string, data: T): Promise<PublishAck>;
+    /**
+     * Subscribe to a topic. Returns an async unsubscribe function.
+     */
+    subscribe(topic: string, callback: (data: PubSubMessage) => void): Promise<() => Promise<void>>;
+    /**
+     * Unsubscribe from a specific topic or from all topics.
+     */
+    unsubscribe(topic?: string): Promise<void>;
+    /**
+     * Close the websocket connection and clear pending requests.
+     */
+    disconnect(): void;
+    private hasSubscriptions;
+    private buildWebSocketURL;
+    private nextRequestId;
+    private ensureSocket;
+    private initConnect;
+    private handleMessage;
+    private handleConnected;
+    private handleClose;
+    private sendEnvelope;
+    private sendUnsubscribe;
+    private connectErrorHandler;
+    private closeSocket;
+    private waitForAck;
+    private resolvePending;
+    private rejectPending;
+    private rejectAllPending;
+}
 interface BeforeSendResult {
     [key: string]: any; // for backward compatibility
     url?: string;
@@ -2962,6 +3024,10 @@ declare class Client {
      * An instance of the service that handles the **Realtime APIs**.
      */
     readonly realtime: RealtimeService;
+    /**
+     * An instance of the service that handles the **WebSocket pub/sub APIs**.
+     */
+    readonly pubsub: PubSubService;
     /**
      * An instance of the service that handles the **Health APIs**.
      */
@@ -3245,4 +3311,4 @@ declare function getTokenPayload(token: string): {
  * @param [expirationThreshold] Time in seconds that will be subtracted from the token `exp` property.
  */
 declare function isTokenExpired(token: string, expirationThreshold?: number): boolean;
-export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse };
+export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse };

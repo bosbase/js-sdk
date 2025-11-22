@@ -2792,6 +2792,68 @@ interface GraphQLRequestOptions extends SendOptions {
 declare class GraphQLService extends BaseService {
     query<T = any>(query: string, variables?: Record<string, any> | null, options?: GraphQLRequestOptions): Promise<GraphQLResponse<T>>;
 }
+interface PubSubMessage<T = any> {
+    id: string;
+    topic: string;
+    created: string;
+    data: T;
+}
+interface PublishAck {
+    id: string;
+    topic: string;
+    created: string;
+}
+declare class PubSubService extends BaseService {
+    private socket;
+    private pendingConnects;
+    private pendingAcks;
+    private subscriptions;
+    private reconnectAttempts;
+    private reconnectTimeoutId;
+    private connectTimeoutId;
+    private manualClose;
+    private readonly maxConnectTimeout;
+    private readonly ackTimeoutMs;
+    private readonly predefinedReconnectIntervals;
+    private readonly maxReconnectAttempts;
+    constructor(client: Client);
+    /**
+     * Indicates whether the websocket is connected.
+     */
+    get isConnected(): boolean;
+    /**
+     * Publish a message to a topic. Resolves when the server acknowledges it.
+     */
+    publish<T = any>(topic: string, data: T): Promise<PublishAck>;
+    /**
+     * Subscribe to a topic. Returns an async unsubscribe function.
+     */
+    subscribe(topic: string, callback: (data: PubSubMessage) => void): Promise<() => Promise<void>>;
+    /**
+     * Unsubscribe from a specific topic or from all topics.
+     */
+    unsubscribe(topic?: string): Promise<void>;
+    /**
+     * Close the websocket connection and clear pending requests.
+     */
+    disconnect(): void;
+    private hasSubscriptions;
+    private buildWebSocketURL;
+    private nextRequestId;
+    private ensureSocket;
+    private initConnect;
+    private handleMessage;
+    private handleConnected;
+    private handleClose;
+    private sendEnvelope;
+    private sendUnsubscribe;
+    private connectErrorHandler;
+    private closeSocket;
+    private waitForAck;
+    private resolvePending;
+    private rejectPending;
+    private rejectAllPending;
+}
 interface BeforeSendResult {
     [key: string]: any;
     url?: string;
@@ -2896,6 +2958,10 @@ declare class Client {
      * An instance of the service that handles the **Realtime APIs**.
      */
     readonly realtime: RealtimeService;
+    /**
+     * An instance of the service that handles the **WebSocket pub/sub APIs**.
+     */
+    readonly pubsub: PubSubService;
     /**
      * An instance of the service that handles the **Health APIs**.
      */

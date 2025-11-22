@@ -1,3 +1,4 @@
+import Client from "@/Client";
 import { BaseService } from "@/services/BaseService";
 import { ClientResponseError } from "@/ClientResponseError";
 
@@ -29,7 +30,6 @@ export class PubSubService extends BaseService {
     private reconnectTimeoutId: any;
     private connectTimeoutId: any;
     private manualClose = false;
-    private clientId = "";
     private readonly maxConnectTimeout = 15000;
     private readonly ackTimeoutMs = 10000;
     private readonly predefinedReconnectIntervals: Array<number> = [
@@ -256,7 +256,6 @@ export class PubSubService extends BaseService {
 
         switch (data?.type) {
             case "ready":
-                this.clientId = data.clientId || "";
                 this.handleConnected();
                 break;
             case "message": {
