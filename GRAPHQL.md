@@ -2,6 +2,8 @@
 
 Use `pb.graphql.query()` to call `/api/graphql` with your current auth token. It returns `{ data, errors, extensions }`.
 
+> Authentication: the GraphQL endpoint is **superuser-only**. Authenticate as a superuser before calling GraphQL, e.g. `await pb.collection("_superusers").authWithPassword(email, password);`.
+
 ## Single-table query
 
 ```js
