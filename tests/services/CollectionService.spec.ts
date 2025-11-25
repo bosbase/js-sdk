@@ -119,4 +119,34 @@ describe("CollectionService", function () {
             assert.deepEqual(result as any, [{ name: "table1" }]);
         });
     });
+
+    describe("importSqlTables()", function () {
+        test("Should send import sql tables request", async function () {
+            fetchMock.on({
+                method: "POST",
+                url: service.client.buildURL("/api/collections/sql/import?q1=456"),
+                body: {
+                    tables: [{ name: "legacy_orders", sql: "CREATE TABLE ..." }],
+                },
+                additionalMatcher: (_, config) => {
+                    return config?.headers?.["x-test"] === "123";
+                },
+                replyCode: 200,
+                replyBody: { created: [{ name: "legacy_orders" }], skipped: [] },
+            });
+
+            const result = await service.importSqlTables(
+                [{ name: "legacy_orders", sql: "CREATE TABLE ..." }],
+                {
+                    q1: 456,
+                    headers: { "x-test": "123" },
+                },
+            );
+
+            assert.deepEqual(result as any, {
+                created: [{ name: "legacy_orders" }],
+                skipped: [],
+            });
+        });
+    });
 });

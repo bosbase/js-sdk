@@ -1,5 +1,11 @@
 import { CrudService } from "@/services/CrudService";
-import { CollectionModel, CollectionField, CollectionSchemaInfo } from "@/tools/dtos";
+import {
+    CollectionModel,
+    CollectionField,
+    CollectionSchemaInfo,
+    SqlTableDefinition,
+    SqlTableImportResult,
+} from "@/tools/dtos";
 import { CommonOptions } from "@/tools/options";
 
 export class CollectionService extends CrudService<CollectionModel> {
@@ -199,6 +205,39 @@ export class CollectionService extends CrudService<CollectionModel> {
 
         return this.client.send<Array<CollectionModel>>(
             this.baseCrudPath + "/sql/tables",
+            options,
+        );
+    }
+
+    /**
+     * Creates or registers SQL tables and maps them to collections.
+     *
+     * Tables with existing collections are skipped and returned in the `skipped` list.
+     * Optional `sql` statements are executed before registration (e.g. CREATE TABLE).
+     *
+     * Only available to superusers.
+     *
+     * @param tables - Table definitions (name + optional SQL)
+     * @param options - Optional request options
+     * @returns Object with created collections and skipped table names
+     * @throws {ClientResponseError}
+     */
+    async importSqlTables(
+        tables: Array<SqlTableDefinition>,
+        options?: CommonOptions,
+    ): Promise<SqlTableImportResult> {
+        options = Object.assign(
+            {
+                method: "POST",
+                body: {
+                    tables,
+                },
+            },
+            options,
+        );
+
+        return this.client.send<SqlTableImportResult>(
+            this.baseCrudPath + "/sql/import",
             options,
         );
     }

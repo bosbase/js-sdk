@@ -97,6 +97,7 @@ interface collection extends BaseModel {
     fields: Array<CollectionField>;
     indexes: Array<string>;
     system: boolean;
+    externalTable?: boolean;
     listRule?: string;
     viewRule?: string;
     createRule?: string;
@@ -138,6 +139,16 @@ export type CollectionModel =
     | BaseCollectionModel
     | ViewCollectionModel
     | AuthCollectionModel;
+
+export interface SqlTableDefinition {
+    name: string;
+    sql?: string;
+}
+
+export interface SqlTableImportResult {
+    created: Array<CollectionModel>;
+    skipped: Array<string>;
+}
 
 // -------------------------------------------------------------------
 // Schema types
