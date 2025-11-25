@@ -121,6 +121,7 @@ interface collection extends BaseModel {
     fields: Array<CollectionField>;
     indexes: Array<string>;
     system: boolean;
+    externalTable?: boolean;
     listRule?: string;
     viewRule?: string;
     createRule?: string;
@@ -153,6 +154,14 @@ interface AuthCollectionModel extends collection {
     confirmEmailChangeTemplate: EmailTemplate;
 }
 type CollectionModel = BaseCollectionModel | ViewCollectionModel | AuthCollectionModel;
+interface SqlTableDefinition {
+    name: string;
+    sql?: string;
+}
+interface SqlTableImportResult {
+    created: Array<CollectionModel>;
+    skipped: Array<string>;
+}
 // -------------------------------------------------------------------
 // Schema types
 // -------------------------------------------------------------------
@@ -1632,6 +1641,31 @@ declare class CollectionService extends CrudService<CollectionModel> {
      * @throws {ClientResponseError}
      */
     truncate(collectionIdOrName: string, options?: CommonOptions): Promise<true>;
+    /**
+     * Registers existing SQL tables and generates REST APIs for them.
+     *
+     * Only available to superusers.
+     *
+     * @param tables - List of table names to register
+     * @param options - Optional request options
+     * @returns Array of created collection models
+     * @throws {ClientResponseError}
+     */
+    registerSqlTables(tables: Array<string>, options?: CommonOptions): Promise<Array<CollectionModel>>;
+    /**
+     * Creates or registers SQL tables and maps them to collections.
+     *
+     * Tables with existing collections are skipped and returned in the `skipped` list.
+     * Optional `sql` statements are executed before registration (e.g. CREATE TABLE).
+     *
+     * Only available to superusers.
+     *
+     * @param tables - Table definitions (name + optional SQL)
+     * @param options - Optional request options
+     * @returns Object with created collections and skipped table names
+     * @throws {ClientResponseError}
+     */
+    importSqlTables(tables: Array<SqlTableDefinition>, options?: CommonOptions): Promise<SqlTableImportResult>;
     // -------------------------------------------------------------------
     // Export/Import Helpers
     // -------------------------------------------------------------------
@@ -3311,4 +3345,4 @@ declare function getTokenPayload(token: string): {
  * @param [expirationThreshold] Time in seconds that will be subtracted from the token `exp` property.
  */
 declare function isTokenExpired(token: string, expirationThreshold?: number): boolean;
-export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse };
+export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, SqlTableDefinition, SqlTableImportResult, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse };

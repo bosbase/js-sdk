@@ -100,6 +100,7 @@ interface collection extends BaseModel {
     fields: Array<CollectionField>;
     indexes: Array<string>;
     system: boolean;
+    externalTable?: boolean;
     listRule?: string;
     viewRule?: string;
     createRule?: string;
@@ -132,6 +133,14 @@ interface AuthCollectionModel extends collection {
     confirmEmailChangeTemplate: EmailTemplate;
 }
 type CollectionModel = BaseCollectionModel | ViewCollectionModel | AuthCollectionModel;
+interface SqlTableDefinition {
+    name: string;
+    sql?: string;
+}
+interface SqlTableImportResult {
+    created: Array<CollectionModel>;
+    skipped: Array<string>;
+}
 // -------------------------------------------------------------------
 // Schema types
 // -------------------------------------------------------------------
@@ -1589,6 +1598,31 @@ declare class CollectionService extends CrudService<CollectionModel> {
      * @throws {ClientResponseError}
      */
     truncate(collectionIdOrName: string, options?: CommonOptions): Promise<true>;
+    /**
+     * Registers existing SQL tables and generates REST APIs for them.
+     *
+     * Only available to superusers.
+     *
+     * @param tables - List of table names to register
+     * @param options - Optional request options
+     * @returns Array of created collection models
+     * @throws {ClientResponseError}
+     */
+    registerSqlTables(tables: Array<string>, options?: CommonOptions): Promise<Array<CollectionModel>>;
+    /**
+     * Creates or registers SQL tables and maps them to collections.
+     *
+     * Tables with existing collections are skipped and returned in the `skipped` list.
+     * Optional `sql` statements are executed before registration (e.g. CREATE TABLE).
+     *
+     * Only available to superusers.
+     *
+     * @param tables - Table definitions (name + optional SQL)
+     * @param options - Optional request options
+     * @returns Object with created collections and skipped table names
+     * @throws {ClientResponseError}
+     */
+    importSqlTables(tables: Array<SqlTableDefinition>, options?: CommonOptions): Promise<SqlTableImportResult>;
     // -------------------------------------------------------------------
     // Export/Import Helpers
     // -------------------------------------------------------------------
