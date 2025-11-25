@@ -9,7 +9,7 @@ Use the SQL table helpers to expose existing tables (or run SQL to create them) 
 
 - Authenticate with a `_superusers` token.
 - Each table must contain a `TEXT` primary key column named `id`.
-- Common system columns are respected if present (`created`, `updated`, `createdBy`, `updatedBy`); no extra columns are added.
+- Missing audit columns (`created`, `updated`, `createdBy`, `updatedBy`) are automatically added so the default API rules can be applied.
 - Non-system columns are mapped by best effort (text, number, bool, date/time, JSON).
 
 ## Basic Usage
@@ -59,8 +59,7 @@ const result = await pb.collections.importSqlTables([
     sql: `
       CREATE TABLE IF NOT EXISTS legacy_orders (
         id TEXT PRIMARY KEY,
-        customer_email TEXT NOT NULL,
-        total NUMERIC NOT NULL
+        customer_email TEXT NOT NULL
       );
     `,
   },
@@ -75,11 +74,12 @@ console.log(result.skipped); // collection names that already existed
 
 - Creates BosBase collection metadata for the provided tables.
 - Generates REST endpoints for CRUD against those tables.
-- Leaves the existing SQL schema and data untouched; no field mutations or table syncs are performed.
+- Applies the standard default API rules (authenticated create; update/delete scoped to the creator).
+- Ensures audit columns exist (`created`, `updated`, `createdBy`, `updatedBy`) and leaves all other existing SQL schema and data untouched; no further field mutations or table syncs are performed.
 - Marks created collections with `externalTable: true` so you can distinguish them from regular BosBase-managed tables.
 
 ## Troubleshooting
 
 - 400 error: ensure `id` exists as `TEXT PRIMARY KEY` and the table name is not system-reserved (no leading `_`).
 - 401/403: confirm you are authenticated as a superuser.
-- Default audit fields (`created`, `updated`, `createdBy`, `updatedBy`) are auto-added to the collection metadata when present in the table; if they’re missing from the table, they won’t be synthesized.
+- Default audit fields (`created`, `updated`, `createdBy`, `updatedBy`) are auto-added if they’re missing so the default owner rules validate successfully.

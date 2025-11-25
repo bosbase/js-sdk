@@ -438,6 +438,118 @@ export class RecordService<M = RecordModel> extends CrudService<M> {
     }
 
     /**
+     * Binds a custom token to an auth record after verifying the email and password.
+     *
+     * @throws {ClientResponseError}
+     */
+    async bindCustomToken(
+        email: string,
+        password: string,
+        token: string,
+        options?: CommonOptions,
+    ): Promise<boolean> {
+        options = Object.assign(
+            {
+                method: "POST",
+                body: {
+                    email: email,
+                    password: password,
+                    token: token,
+                },
+            },
+            options,
+        );
+
+        return this.client
+            .send(this.baseCollectionPath + "/bind-token", options)
+            .then(() => true);
+    }
+
+    /**
+     * Removes a previously bound custom token after verifying the email and password.
+     *
+     * @throws {ClientResponseError}
+     */
+    async unbindCustomToken(
+        email: string,
+        password: string,
+        token: string,
+        options?: CommonOptions,
+    ): Promise<boolean> {
+        options = Object.assign(
+            {
+                method: "POST",
+                body: {
+                    email: email,
+                    password: password,
+                    token: token,
+                },
+            },
+            options,
+        );
+
+        return this.client
+            .send(this.baseCollectionPath + "/unbind-token", options)
+            .then(() => true);
+    }
+
+    /**
+     * Authenticate an auth collection record using a previously bound custom token.
+     *
+     * On success, this method also automatically updates
+     * the client's AuthStore data and returns:
+     * - the authentication token
+     * - the authenticated record model
+     *
+     * @throws {ClientResponseError}
+     */
+    async authWithToken<T = M>(
+        token: string,
+        options?: RecordOptions,
+    ): Promise<RecordAuthResponse<T>> {
+        options = Object.assign(
+            {
+                method: "POST",
+                body: {
+                    token: token,
+                },
+            },
+            options,
+        );
+
+        let autoRefreshThreshold;
+        if (this.isSuperusers) {
+            autoRefreshThreshold = options.autoRefreshThreshold;
+            delete options.autoRefreshThreshold;
+            if (!options.autoRefresh) {
+                resetAutoRefresh(this.client);
+            }
+        }
+
+        let authData = await this.client.send(
+            this.baseCollectionPath + "/auth-with-token",
+            options,
+        );
+
+        authData = this.authResponse<T>(authData);
+
+        if (autoRefreshThreshold && this.isSuperusers) {
+            registerAutoRefresh(
+                this.client,
+                autoRefreshThreshold,
+                () => this.authRefresh({ autoRefresh: true }),
+                () =>
+                    this.authWithToken<T>(
+                        token,
+                        Object.assign({ autoRefresh: true }, options),
+                    ),
+            );
+        }
+
+        return authData;
+    }
+
+    /**
      * Authenticate a single auth collection record with OAuth2 code.
      *
      * If you don't have an OAuth2 code you may also want to check `authWithOAuth2` method.
