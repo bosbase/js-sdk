@@ -173,6 +173,36 @@ export class CollectionService extends CrudService<CollectionModel> {
             .then(() => true);
     }
 
+    /**
+     * Registers existing SQL tables and generates REST APIs for them.
+     *
+     * Only available to superusers.
+     *
+     * @param tables - List of table names to register
+     * @param options - Optional request options
+     * @returns Array of created collection models
+     * @throws {ClientResponseError}
+     */
+    async registerSqlTables(
+        tables: Array<string>,
+        options?: CommonOptions,
+    ): Promise<Array<CollectionModel>> {
+        options = Object.assign(
+            {
+                method: "POST",
+                body: {
+                    tables,
+                },
+            },
+            options,
+        );
+
+        return this.client.send<Array<CollectionModel>>(
+            this.baseCrudPath + "/sql/tables",
+            options,
+        );
+    }
+
     // -------------------------------------------------------------------
     // Export/Import Helpers
     // -------------------------------------------------------------------

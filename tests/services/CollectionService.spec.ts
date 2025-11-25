@@ -95,4 +95,28 @@ describe("CollectionService", function () {
             assert.deepEqual(result, true);
         });
     });
+
+    describe("registerSqlTables()", function () {
+        test("Should send register sql tables request", async function () {
+            fetchMock.on({
+                method: "POST",
+                url: service.client.buildURL("/api/collections/sql/tables?q1=456"),
+                body: {
+                    tables: ["table1", "table2"],
+                },
+                additionalMatcher: (_, config) => {
+                    return config?.headers?.["x-test"] === "123";
+                },
+                replyCode: 200,
+                replyBody: [{ name: "table1" }],
+            });
+
+            const result = await service.registerSqlTables(["table1", "table2"], {
+                q1: 456,
+                headers: { "x-test": "123" },
+            });
+
+            assert.deepEqual(result as any, [{ name: "table1" }]);
+        });
+    });
 });
