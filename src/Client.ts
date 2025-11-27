@@ -16,6 +16,7 @@ import { LLMDocumentService } from "@/services/LLMDocumentService";
 import { CacheService } from "@/services/CacheService";
 import { LangChaingoService } from "@/services/LangChaingoService";
 import { GraphQLService } from "@/services/GraphQLService";
+import { SQLService } from "@/services/SQLService";
 import { PubSubService } from "@/services/PubSubService";
 import { RecordModel } from "@/tools/dtos";
 import {
@@ -194,6 +195,11 @@ export default class Client {
      */
     readonly graphql: GraphQLService;
 
+    /**
+     * An instance of the service that handles **SQL execution APIs**.
+     */
+    readonly sql: SQLService;
+
     private cancelControllers: { [key: string]: AbortController } = {};
     private recordServices: { [key: string]: RecordService } = {};
     private enableAutoCancellation: boolean = true;
@@ -226,6 +232,7 @@ export default class Client {
         this.langchaingo = new LangChaingoService(this);
         this.caches = new CacheService(this);
         this.graphql = new GraphQLService(this);
+        this.sql = new SQLService(this);
     }
 
     /**

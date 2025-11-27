@@ -1330,6 +1330,29 @@ declare class RecordService<M = RecordModel> extends CrudService<M> {
      */
     authWithPassword<T = M>(usernameOrEmail: string, password: string, options?: RecordOptions): Promise<RecordAuthResponse<T>>;
     /**
+     * Binds a custom token to an auth record after verifying the email and password.
+     *
+     * @throws {ClientResponseError}
+     */
+    bindCustomToken(email: string, password: string, token: string, options?: CommonOptions): Promise<boolean>;
+    /**
+     * Removes a previously bound custom token after verifying the email and password.
+     *
+     * @throws {ClientResponseError}
+     */
+    unbindCustomToken(email: string, password: string, token: string, options?: CommonOptions): Promise<boolean>;
+    /**
+     * Authenticate an auth collection record using a previously bound custom token.
+     *
+     * On success, this method also automatically updates
+     * the client's AuthStore data and returns:
+     * - the authentication token
+     * - the authenticated record model
+     *
+     * @throws {ClientResponseError}
+     */
+    authWithToken<T = M>(token: string, options?: RecordOptions): Promise<RecordAuthResponse<T>>;
+    /**
      * Authenticate a single auth collection record with OAuth2 code.
      *
      * If you don't have an OAuth2 code you may also want to check `authWithOAuth2` method.
