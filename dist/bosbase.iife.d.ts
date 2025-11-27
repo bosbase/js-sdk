@@ -2849,6 +2849,31 @@ interface GraphQLRequestOptions extends SendOptions {
 declare class GraphQLService extends BaseService {
     query<T = any>(query: string, variables?: Record<string, any> | null, options?: GraphQLRequestOptions): Promise<GraphQLResponse<T>>;
 }
+interface SQLExecuteResponse {
+    /**
+     * Column names when the query returns rows.
+     */
+    columns?: string[];
+    /**
+     * Query results represented as an array of rows.
+     */
+    rows?: Array<Array<string>>;
+    /**
+     * Rows affected for write operations.
+     */
+    rowsAffected?: number;
+}
+/**
+ * SQLService provides superuser-only SQL execution helpers.
+ */
+declare class SQLService extends BaseService {
+    /**
+     * Execute a SQL statement and return the result.
+     *
+     * Only superusers can call this endpoint.
+     */
+    execute(query: string, options?: SendOptions): Promise<SQLExecuteResponse>;
+}
 interface PubSubMessage<T = any> {
     id: string;
     topic: string;
@@ -3051,6 +3076,10 @@ declare class Client {
      * An instance of the service that handles **GraphQL queries**.
      */
     readonly graphql: GraphQLService;
+    /**
+     * An instance of the service that handles **SQL execution APIs**.
+     */
+    readonly sql: SQLService;
     private cancelControllers;
     private recordServices;
     private enableAutoCancellation;
