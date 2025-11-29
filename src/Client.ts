@@ -17,6 +17,7 @@ import { CacheService } from "@/services/CacheService";
 import { LangChaingoService } from "@/services/LangChaingoService";
 import { GraphQLService } from "@/services/GraphQLService";
 import { SQLService } from "@/services/SQLService";
+import { RedisService } from "@/services/RedisService";
 import { PubSubService } from "@/services/PubSubService";
 import { RecordModel } from "@/tools/dtos";
 import {
@@ -200,6 +201,11 @@ export default class Client {
      */
     readonly sql: SQLService;
 
+    /**
+     * An instance of the service that handles **Redis key APIs**.
+     */
+    readonly redis: RedisService;
+
     private cancelControllers: { [key: string]: AbortController } = {};
     private recordServices: { [key: string]: RecordService } = {};
     private enableAutoCancellation: boolean = true;
@@ -233,6 +239,7 @@ export default class Client {
         this.caches = new CacheService(this);
         this.graphql = new GraphQLService(this);
         this.sql = new SQLService(this);
+        this.redis = new RedisService(this);
     }
 
     /**
