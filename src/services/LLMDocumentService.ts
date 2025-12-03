@@ -68,6 +68,11 @@ export class LLMDocumentService extends BaseService {
         });
     }
 
+    // Alias for get() to mirror other SDK surfaces.
+    async getOne(id: string, options: LLMServiceOptions): Promise<LLMDocument> {
+        return this.get(id, options);
+    }
+
     async update(
         id: string,
         document: LLMDocumentUpdate,

@@ -2874,6 +2874,53 @@ declare class SQLService extends BaseService {
      */
     execute(query: string, options?: SendOptions): Promise<SQLExecuteResponse>;
 }
+interface RedisKeySummary {
+    key: string;
+}
+interface RedisEntry<T = any> {
+    key: string;
+    value: T;
+    ttlSeconds?: number;
+}
+interface RedisListPage {
+    cursor: string;
+    items: RedisKeySummary[];
+}
+interface CreateRedisKeyBody<T = any> {
+    key: string;
+    value: T;
+    ttlSeconds?: number;
+}
+interface UpdateRedisKeyBody<T = any> {
+    value: T;
+    ttlSeconds?: number;
+}
+declare class RedisService extends BaseService {
+    /**
+     * Iterates redis keys using SCAN.
+     */
+    listKeys(query?: {
+        cursor?: string | number;
+        pattern?: string;
+        count?: number;
+    }, options?: CommonOptions): Promise<RedisListPage>;
+    /**
+     * Creates a new key only if it doesn't exist.
+     */
+    createKey<T = any>(body: CreateRedisKeyBody<T>, options?: CommonOptions): Promise<RedisEntry<T>>;
+    /**
+     * Reads a key value.
+     */
+    getKey<T = any>(key: string, options?: CommonOptions): Promise<RedisEntry<T>>;
+    /**
+     * Updates an existing key. If ttlSeconds is omitted the existing TTL is preserved.
+     */
+    updateKey<T = any>(key: string, body: UpdateRedisKeyBody<T>, options?: CommonOptions): Promise<RedisEntry<T>>;
+    /**
+     * Deletes a key.
+     */
+    deleteKey(key: string, options?: CommonOptions): Promise<boolean>;
+}
 interface PubSubMessage<T = any> {
     id: string;
     topic: string;
@@ -3080,6 +3127,10 @@ declare class Client {
      * An instance of the service that handles **SQL execution APIs**.
      */
     readonly sql: SQLService;
+    /**
+     * An instance of the service that handles **Redis key APIs**.
+     */
+    readonly redis: RedisService;
     private cancelControllers;
     private recordServices;
     private enableAutoCancellation;
