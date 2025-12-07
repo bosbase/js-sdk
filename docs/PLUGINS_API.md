@@ -16,7 +16,7 @@ The `plugins` helper forwards HTTP requests from the JS SDK to the Go backend, w
 ```javascript
 import BosBase from "bosbase";
 
-const pb = new BosBase("http://127.0.0.1:8090");
+const pb = new BosBase("http://127.0.0.1:8080");
 
 // Simple GET to your plugin (e.g., FastAPI /health)
 const health = await pb.plugins("GET", "/health");
