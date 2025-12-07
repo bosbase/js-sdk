@@ -100,7 +100,7 @@ socket.onerror = console.error;
 ```
 
 ## Notes and behavior
-
+- Implemented SSE and WebSocket support on plugins, forwarding via /api/plugins, preserving query params, and now passing headers to EventSource/WebSocket constructors when supported. 
 - Requests are sent to `/api/plugins/...` on the Go backend, which forwards them to the Python plugin service 
 - All `SendOptions` are supported: `headers`, `body`, `query`, `requestKey`/`$cancelKey`, and custom `fetch` functions.
 - Body serialization and FormData conversion follow the normal client rules; set `Content-Type` yourself when you need a different encoding.
