@@ -2715,6 +2715,8 @@ declare class LLMDocumentService extends BaseService {
         success: boolean;
     }>;
     get(id: string, options: LLMServiceOptions): Promise<LLMDocument>;
+    // Alias for get() to mirror other SDK surfaces.
+    getOne(id: string, options: LLMServiceOptions): Promise<LLMDocument>;
     update(id: string, document: LLMDocumentUpdate, options: LLMServiceOptions): Promise<{
         success: boolean;
     }>;
@@ -2993,6 +2995,56 @@ declare class RedisService extends BaseService {
      */
     deleteKey(key: string, options?: CommonOptions): Promise<boolean>;
 }
+declare const pluginHttpMethods: readonly [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "HEAD",
+    "OPTIONS"
+];
+declare const pluginSseMethods: readonly [
+    "SSE"
+];
+declare const pluginWebSocketMethods: readonly [
+    "WS",
+    "WEBSOCKET"
+];
+type PluginHTTPMethod = (typeof pluginHttpMethods)[number];
+type PluginSSEMethod = (typeof pluginSseMethods)[number];
+type PluginWebSocketMethod = (typeof pluginWebSocketMethods)[number];
+type PluginMethod = PluginHTTPMethod | PluginSSEMethod | PluginWebSocketMethod;
+type PluginHTTPMethodInput = PluginHTTPMethod | Lowercase<PluginHTTPMethod>;
+type PluginSSEMethodInput = PluginSSEMethod | Lowercase<PluginSSEMethod>;
+type PluginWebSocketMethodInput = PluginWebSocketMethod | Lowercase<PluginWebSocketMethod>;
+type PluginMethodInput = PluginMethod | Lowercase<PluginMethod>;
+interface PluginRequestOptions extends SendOptions {
+}
+interface PluginSSERequestOptions extends PluginRequestOptions {
+    eventSourceInit?: EventSourceInit;
+}
+interface PluginWebSocketRequestOptions extends PluginRequestOptions {
+    websocketProtocols?: string | string[];
+}
+/**
+ * PluginService forwards requests to the configured plugin proxy endpoint.
+ */
+declare class PluginService extends BaseService {
+    /**
+     * Send a request to the plugin proxy endpoint.
+     */
+    request(method: PluginSSEMethodInput, path: string, options?: PluginSSERequestOptions): EventSource;
+    request(method: PluginWebSocketMethodInput, path: string, options?: PluginWebSocketRequestOptions): WebSocket;
+    request<T = any>(method: PluginHTTPMethodInput, path: string, options?: PluginRequestOptions): Promise<T>;
+    private isSseMethod;
+    private isWebSocketMethod;
+    private normalizePath;
+    private createEventSource;
+    private createWebSocket;
+    private buildURL;
+    private buildQueryParams;
+}
 interface PubSubMessage<T = any> {
     id: string;
     topic: string;
@@ -3206,6 +3258,7 @@ declare class Client {
     private cancelControllers;
     private recordServices;
     private enableAutoCancellation;
+    private pluginService;
     constructor(baseURL?: string, authStore?: BaseAuthStore | null, lang?: string);
     /**
      * @deprecated
@@ -3234,6 +3287,12 @@ declare class Client {
      * Returns the RecordService associated to the specified collection.
      */
     collection<M = RecordModel>(idOrName: string): RecordService<M>;
+    /**
+     * Proxies a request to the configured plugin endpoint via the Go backend.
+     */
+    plugins(method: PluginSSEMethodInput, path: string, options?: PluginSSERequestOptions): EventSource;
+    plugins(method: PluginWebSocketMethodInput, path: string, options?: PluginWebSocketRequestOptions): WebSocket;
+    plugins<T = any>(method: PluginHTTPMethodInput, path: string, options?: PluginRequestOptions): Promise<T>;
     /**
      * Globally enable or disable auto cancellation for pending duplicated requests.
      */
@@ -3454,4 +3513,4 @@ declare function getTokenPayload(token: string): {
  * @param [expirationThreshold] Time in seconds that will be subtracted from the token `exp` property.
  */
 declare function isTokenExpired(token: string, expirationThreshold?: number): boolean;
-export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, SQLService, RedisKeySummary, RedisEntry, RedisListPage, CreateRedisKeyBody, UpdateRedisKeyBody, RedisService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, SqlTableDefinition, SqlTableImportResult, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse, SQLExecuteRequest, SQLExecuteResponse };
+export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, SQLService, RedisKeySummary, RedisEntry, RedisListPage, CreateRedisKeyBody, UpdateRedisKeyBody, RedisService, PluginHTTPMethod, PluginSSEMethod, PluginWebSocketMethod, PluginMethod, PluginHTTPMethodInput, PluginSSEMethodInput, PluginWebSocketMethodInput, PluginMethodInput, PluginRequestOptions, PluginSSERequestOptions, PluginWebSocketRequestOptions, PluginService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, SqlTableDefinition, SqlTableImportResult, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse, SQLExecuteRequest, SQLExecuteResponse };

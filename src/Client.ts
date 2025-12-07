@@ -18,6 +18,16 @@ import { LangChaingoService } from "@/services/LangChaingoService";
 import { GraphQLService } from "@/services/GraphQLService";
 import { SQLService } from "@/services/SQLService";
 import { RedisService } from "@/services/RedisService";
+import {
+    PluginMethodInput,
+    PluginHTTPMethodInput,
+    PluginSSEMethodInput,
+    PluginWebSocketMethodInput,
+    PluginRequestOptions,
+    PluginSSERequestOptions,
+    PluginWebSocketRequestOptions,
+    PluginService,
+} from "@/services/PluginService";
 import { PubSubService } from "@/services/PubSubService";
 import { RecordModel } from "@/tools/dtos";
 import {
@@ -209,6 +219,7 @@ export default class Client {
     private cancelControllers: { [key: string]: AbortController } = {};
     private recordServices: { [key: string]: RecordService } = {};
     private enableAutoCancellation: boolean = true;
+    private pluginService: PluginService;
 
     constructor(baseURL = "/", authStore?: BaseAuthStore | null, lang = "en-US") {
         this.baseURL = baseURL;
@@ -240,6 +251,7 @@ export default class Client {
         this.graphql = new GraphQLService(this);
         this.sql = new SQLService(this);
         this.redis = new RedisService(this);
+        this.pluginService = new PluginService(this);
     }
 
     /**
@@ -280,6 +292,32 @@ export default class Client {
         }
 
         return this.recordServices[idOrName];
+    }
+
+    /**
+     * Proxies a request to the configured plugin endpoint via the Go backend.
+     */
+    plugins(
+        method: PluginSSEMethodInput,
+        path: string,
+        options?: PluginSSERequestOptions,
+    ): EventSource;
+    plugins(
+        method: PluginWebSocketMethodInput,
+        path: string,
+        options?: PluginWebSocketRequestOptions,
+    ): WebSocket;
+    plugins<T = any>(
+        method: PluginHTTPMethodInput,
+        path: string,
+        options?: PluginRequestOptions,
+    ): Promise<T>;
+    plugins<T = any>(
+        method: PluginMethodInput,
+        path: string,
+        options?: PluginRequestOptions,
+    ): Promise<T> | EventSource | WebSocket {
+        return this.pluginService.request(method as any, path, options as any);
     }
 
     /**

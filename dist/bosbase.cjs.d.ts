@@ -2653,6 +2653,8 @@ declare class LLMDocumentService extends BaseService {
         success: boolean;
     }>;
     get(id: string, options: LLMServiceOptions): Promise<LLMDocument>;
+    // Alias for get() to mirror other SDK surfaces.
+    getOne(id: string, options: LLMServiceOptions): Promise<LLMDocument>;
     update(id: string, document: LLMDocumentUpdate, options: LLMServiceOptions): Promise<{
         success: boolean;
     }>;
@@ -2921,6 +2923,36 @@ declare class RedisService extends BaseService {
      */
     deleteKey(key: string, options?: CommonOptions): Promise<boolean>;
 }
+declare const pluginHttpMethods: readonly [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "HEAD",
+    "OPTIONS"
+];
+declare const pluginSseMethods: readonly [
+    "SSE"
+];
+declare const pluginWebSocketMethods: readonly [
+    "WS",
+    "WEBSOCKET"
+];
+type PluginHTTPMethod = (typeof pluginHttpMethods)[number];
+type PluginSSEMethod = (typeof pluginSseMethods)[number];
+type PluginWebSocketMethod = (typeof pluginWebSocketMethods)[number];
+type PluginHTTPMethodInput = PluginHTTPMethod | Lowercase<PluginHTTPMethod>;
+type PluginSSEMethodInput = PluginSSEMethod | Lowercase<PluginSSEMethod>;
+type PluginWebSocketMethodInput = PluginWebSocketMethod | Lowercase<PluginWebSocketMethod>;
+interface PluginRequestOptions extends SendOptions {
+}
+interface PluginSSERequestOptions extends PluginRequestOptions {
+    eventSourceInit?: EventSourceInit;
+}
+interface PluginWebSocketRequestOptions extends PluginRequestOptions {
+    websocketProtocols?: string | string[];
+}
 interface PubSubMessage<T = any> {
     id: string;
     topic: string;
@@ -3134,6 +3166,7 @@ declare class Client {
     private cancelControllers;
     private recordServices;
     private enableAutoCancellation;
+    private pluginService;
     constructor(baseURL?: string, authStore?: BaseAuthStore | null, lang?: string);
     /**
      * @deprecated
@@ -3181,6 +3214,15 @@ declare class Client {
      * Returns the RecordService associated to the specified collection.
      */
     collection<M = RecordModel>(idOrName: string): RecordService<M>;
+    /**
+     * Proxies a request to the configured plugin endpoint via the Go backend.
+     */
+    /**
+     * Proxies a request to the configured plugin endpoint via the Go backend.
+     */
+    plugins(method: PluginSSEMethodInput, path: string, options?: PluginSSERequestOptions): EventSource;
+    plugins(method: PluginWebSocketMethodInput, path: string, options?: PluginWebSocketRequestOptions): WebSocket;
+    plugins<T = any>(method: PluginHTTPMethodInput, path: string, options?: PluginRequestOptions): Promise<T>;
     /**
      * Globally enable or disable auto cancellation for pending duplicated requests.
      */
