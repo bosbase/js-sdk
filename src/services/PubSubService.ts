@@ -15,6 +15,27 @@ export interface PublishAck {
     created: string;
 }
 
+export interface RealtimeMessage<T = any> {
+    topic: string;
+    /**
+     * Application-defined event name, eg. "join".
+     */
+    event: string;
+    /**
+     * The delivered payload for the event.
+     */
+    payload: T;
+    /**
+     * Optional client-provided reference identifier.
+     */
+    ref?: string;
+    /**
+     * Optional metadata returned by the server.
+     */
+    id?: string;
+    created?: string;
+}
+
 type PendingResolver<T> = {
     resolve: (value: T) => void;
     reject: (reason: any) => void;
@@ -117,6 +138,62 @@ export class PubSubService extends BaseService {
                 this.disconnect();
             }
         };
+    }
+
+    /**
+     * Publish a realtime message envelope `{ topic, event, payload, ref }` over the pub/sub websocket.
+     *
+     * This is a thin wrapper around `publish()` that enforces the realtime message shape.
+     */
+    async realtimePublish<TPayload = any>(
+        topic: string,
+        event: string,
+        payload: TPayload,
+        ref?: string,
+    ): Promise<PublishAck> {
+        if (!event) {
+            throw new Error("event must be set.");
+        }
+
+        const envelope = {
+            event,
+            payload,
+            ref: ref || this.nextRequestId(),
+        };
+
+        return this.publish(topic, envelope);
+    }
+
+    /**
+     * Subscribe to realtime messages emitted on a topic.
+     *
+     * Internally uses the websocket pub/sub transport and normalizes the message
+     * shape to `{ topic, event, payload, ref, id?, created? }`.
+     */
+    async realtimeSubscribe<TPayload = any>(
+        topic: string,
+        callback: (message: RealtimeMessage<TPayload>) => void,
+    ): Promise<() => Promise<void>> {
+        if (!callback) {
+            throw new Error("callback must be set.");
+        }
+
+        return this.subscribe(topic, (msg) => {
+            const data = msg?.data as any;
+            const normalized: RealtimeMessage<TPayload> = {
+                topic: msg?.topic || topic,
+                event: typeof data?.event === "string" ? data.event : "",
+                payload:
+                    data && typeof data === "object" && "payload" in data
+                        ? (data as any).payload
+                        : (data as TPayload),
+                ref: typeof data?.ref === "string" ? data.ref : undefined,
+                id: msg?.id,
+                created: msg?.created,
+            };
+
+            callback(normalized);
+        });
     }
 
     /**

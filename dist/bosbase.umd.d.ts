@@ -2964,6 +2964,26 @@ interface PublishAck {
     topic: string;
     created: string;
 }
+interface RealtimeMessage<T = any> {
+    topic: string;
+    /**
+     * Application-defined event name, eg. "join".
+     */
+    event: string;
+    /**
+     * The delivered payload for the event.
+     */
+    payload: T;
+    /**
+     * Optional client-provided reference identifier.
+     */
+    ref?: string;
+    /**
+     * Optional metadata returned by the server.
+     */
+    id?: string;
+    created?: string;
+}
 declare class PubSubService extends BaseService {
     private socket;
     private pendingConnects;
@@ -2990,6 +3010,19 @@ declare class PubSubService extends BaseService {
      * Subscribe to a topic. Returns an async unsubscribe function.
      */
     subscribe(topic: string, callback: (data: PubSubMessage) => void): Promise<() => Promise<void>>;
+    /**
+     * Publish a realtime message envelope `{ topic, event, payload, ref }` over the pub/sub websocket.
+     *
+     * This is a thin wrapper around `publish()` that enforces the realtime message shape.
+     */
+    realtimePublish<TPayload = any>(topic: string, event: string, payload: TPayload, ref?: string): Promise<PublishAck>;
+    /**
+     * Subscribe to realtime messages emitted on a topic.
+     *
+     * Internally uses the websocket pub/sub transport and normalizes the message
+     * shape to `{ topic, event, payload, ref, id?, created? }`.
+     */
+    realtimeSubscribe<TPayload = any>(topic: string, callback: (message: RealtimeMessage<TPayload>) => void): Promise<() => Promise<void>>;
     /**
      * Unsubscribe from a specific topic or from all topics.
      */

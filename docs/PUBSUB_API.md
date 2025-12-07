@@ -1,10 +1,10 @@
 # Pub/Sub API
 
-BosBase now exposes a lightweight WebSocket-based publish/subscribe channel so SDK users can push and receive custom messages. The Go backend uses the `ws` transport and persists each published payload in the `_pubsub_messages` table so every node in a cluster can replay and fan-out messages to its local subscribers.
+BosBase exposes a lightweight WebSocket-based publish/subscribe channel so SDK users can push and receive custom messages. The Go backend uses the `ws` transport and synchronizes messages through Redis so every node in a cluster can fan-out events to its connected clients without storing them in a database.
 
 - Endpoint: `/api/pubsub` (WebSocket)
 - Auth: the SDK automatically forwards `authStore.token` as a `token` query parameter; cookie-based auth also works. Anonymous clients may subscribe, but publishing requires an authenticated token.
-- Reliability: automatic reconnect with topic re-subscription; messages are stored in the database and broadcasted to all connected nodes.
+- Reliability: automatic reconnect with topic re-subscription; messages are broadcast across nodes via Redis (no database persistence required).
 
 ## Quick Start
 
@@ -24,18 +24,27 @@ console.log("published at", ack.created);
 
 // Later, stop listening
 await unsubscribe();
+
+// Or use the realtime helpers that normalize { topic, event, payload, ref }
+const rtUnsub = await pb.pubsub.realtimeSubscribe("chat/general", (msg) => {
+    console.log("event", msg.event, "payload", msg.payload, "ref", msg.ref);
+});
+
+await pb.pubsub.realtimePublish("chat/general", "join", { text: "Hello again" });
+await rtUnsub();
 ```
 
 ## API Surface
 
 - `pb.pubsub.publish(topic, data)` → `Promise<{ id, topic, created }>`
 - `pb.pubsub.subscribe(topic, handler)` → `Promise<() => Promise<void>>`
+- `pb.pubsub.realtimePublish(topic, event, payload, ref?)` → `Promise<{ id, topic, created }>` (wraps `publish()` with a `{ event, payload, ref }` envelope)
+- `pb.pubsub.realtimeSubscribe(topic, handler)` → `Promise<() => Promise<void>>` (wraps `subscribe()` and normalizes `{ topic, event, payload, ref, id?, created? }`)
 - `pb.pubsub.unsubscribe(topic?)` → `Promise<void>` (omit `topic` to drop all topics)
 - `pb.pubsub.disconnect()` to explicitly close the socket and clear pending requests.
 - `pb.pubsub.isConnected` exposes the current WebSocket state.
 
 ## Notes for Clusters
 
-- Messages are written to `_pubsub_messages` with a timestamp; every running node polls the table and pushes new rows to its connected WebSocket clients.
-- Old pub/sub rows are cleaned up automatically after a day to keep the table small.
-- If a node restarts, it resumes from the latest message and replays new rows as they are inserted, so connected clients on other nodes stay in sync.
+- Messages are fanned-out via Redis so multiple nodes can stay in sync without relying on database storage.
+- If a node restarts, it resumes listening on Redis and continues broadcasting to its connected clients after reconnect.

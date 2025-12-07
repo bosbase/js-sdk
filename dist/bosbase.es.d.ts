@@ -3056,6 +3056,26 @@ interface PublishAck {
     topic: string;
     created: string;
 }
+interface RealtimeMessage<T = any> {
+    topic: string;
+    /**
+     * Application-defined event name, eg. "join".
+     */
+    event: string;
+    /**
+     * The delivered payload for the event.
+     */
+    payload: T;
+    /**
+     * Optional client-provided reference identifier.
+     */
+    ref?: string;
+    /**
+     * Optional metadata returned by the server.
+     */
+    id?: string;
+    created?: string;
+}
 declare class PubSubService extends BaseService {
     private socket;
     private pendingConnects;
@@ -3082,6 +3102,19 @@ declare class PubSubService extends BaseService {
      * Subscribe to a topic. Returns an async unsubscribe function.
      */
     subscribe(topic: string, callback: (data: PubSubMessage) => void): Promise<() => Promise<void>>;
+    /**
+     * Publish a realtime message envelope `{ topic, event, payload, ref }` over the pub/sub websocket.
+     *
+     * This is a thin wrapper around `publish()` that enforces the realtime message shape.
+     */
+    realtimePublish<TPayload = any>(topic: string, event: string, payload: TPayload, ref?: string): Promise<PublishAck>;
+    /**
+     * Subscribe to realtime messages emitted on a topic.
+     *
+     * Internally uses the websocket pub/sub transport and normalizes the message
+     * shape to `{ topic, event, payload, ref, id?, created? }`.
+     */
+    realtimeSubscribe<TPayload = any>(topic: string, callback: (message: RealtimeMessage<TPayload>) => void): Promise<() => Promise<void>>;
     /**
      * Unsubscribe from a specific topic or from all topics.
      */
@@ -3513,4 +3546,4 @@ declare function getTokenPayload(token: string): {
  * @param [expirationThreshold] Time in seconds that will be subtracted from the token `exp` property.
  */
 declare function isTokenExpired(token: string, expirationThreshold?: number): boolean;
-export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, SQLService, RedisKeySummary, RedisEntry, RedisListPage, CreateRedisKeyBody, UpdateRedisKeyBody, RedisService, PluginHTTPMethod, PluginSSEMethod, PluginWebSocketMethod, PluginMethod, PluginHTTPMethodInput, PluginSSEMethodInput, PluginWebSocketMethodInput, PluginMethodInput, PluginRequestOptions, PluginSSERequestOptions, PluginWebSocketRequestOptions, PluginService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, SqlTableDefinition, SqlTableImportResult, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse, SQLExecuteRequest, SQLExecuteResponse };
+export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, RealtimeMessage, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, SQLService, RedisKeySummary, RedisEntry, RedisListPage, CreateRedisKeyBody, UpdateRedisKeyBody, RedisService, PluginHTTPMethod, PluginSSEMethod, PluginWebSocketMethod, PluginMethod, PluginHTTPMethodInput, PluginSSEMethodInput, PluginWebSocketMethodInput, PluginMethodInput, PluginRequestOptions, PluginSSERequestOptions, PluginWebSocketRequestOptions, PluginService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, SqlTableDefinition, SqlTableImportResult, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse, SQLExecuteRequest, SQLExecuteResponse };
