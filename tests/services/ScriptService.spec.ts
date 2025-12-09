@@ -151,6 +151,19 @@ describe("ScriptService", function () {
         assert.isTrue(removed);
     });
 
+    test("execute() calls the execute endpoint", async function () {
+        fetchMock.on({
+            method: "POST",
+            url: service.client.buildURL("/api/scripts/hello/execute"),
+            replyCode: 200,
+            replyBody: { output: "exec-ok" },
+        });
+
+        const result = await service.execute("hello");
+
+        assert.equal(result.output, "exec-ok");
+    });
+
     test("requires superuser auth", async function () {
         client.authStore.clear();
 

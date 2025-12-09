@@ -18,3 +18,7 @@ export interface ScriptUpdate {
     content?: string;
     description?: string;
 }
+
+export interface ScriptExecutionResult {
+    output: string;
+}

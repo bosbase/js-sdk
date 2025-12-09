@@ -87,6 +87,16 @@ You can update just the description if the code is unchanged:
 await pb.scripts.update("hello.py.py", { description: "Docs-only tweak" });
 ```
 
+## Executing Scripts
+
+Run a stored script via the backend runner (uses `/api/scripts/{name}/execute`).
+The server loads the latest script content, writes it under `EXECUTE_PATH` (defaults to `/pb/functions`), activates `.venv/bin/activate`, and runs `python <name>`. The combined stdout/stderr is returned.
+
+```javascript
+const result = await pb.scripts.execute("hello.py");
+console.log(result.output); // console output from the python script
+```
+
 ## Deleting Scripts
 
 Remove a script by name. Returns `true` when a row was deleted.
@@ -100,5 +110,6 @@ console.log(removed); // true or false
 
 - All methods throw if the caller is not authenticated as a superuser.
 - `id` is generated as a UUIDv7 string on insert and backfilled automatically for older rows.
+- Execution uses the directory from `EXECUTE_PATH` env/docker-compose (default `/pb/functions`) and expects a `.venv` there with Python available.
 - Content is stored as plain text; 
 - Table creation runs automatically on first use of the service instance.

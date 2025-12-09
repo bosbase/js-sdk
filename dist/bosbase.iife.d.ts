@@ -2941,6 +2941,9 @@ interface ScriptUpdate {
     content?: string;
     description?: string;
 }
+interface ScriptExecutionResult {
+    output: string;
+}
 declare class ScriptService extends BaseService {
     private readonly basePath;
     /**
@@ -2967,6 +2970,12 @@ declare class ScriptService extends BaseService {
      * Requires superuser authentication.
      */
     update(name: string, changes: ScriptUpdate, options?: SendOptions): Promise<ScriptRecord>;
+    /**
+     * Execute a stored script.
+     *
+     * Requires superuser authentication.
+     */
+    execute(name: string, options?: SendOptions): Promise<ScriptExecutionResult>;
     /**
      * Delete a script by its name.
      *

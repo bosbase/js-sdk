@@ -1,6 +1,6 @@
 import { BaseService } from "@/services/BaseService";
 import { SendOptions } from "@/tools/options";
-import { ScriptCreate, ScriptRecord, ScriptUpdate } from "@/tools/script-types";
+import { ScriptCreate, ScriptExecutionResult, ScriptRecord, ScriptUpdate } from "@/tools/script-types";
 
 export class ScriptService extends BaseService {
     private readonly basePath = "/api/scripts";
@@ -95,6 +95,28 @@ export class ScriptService extends BaseService {
             body: changes,
             ...options,
         });
+    }
+
+    /**
+     * Execute a stored script.
+     *
+     * Requires superuser authentication.
+     */
+    async execute(name: string, options?: SendOptions): Promise<ScriptExecutionResult> {
+        this.requireSuperuser();
+
+        const trimmedName = name?.trim();
+        if (!trimmedName) {
+            throw new Error("script name is required");
+        }
+
+        return this.client.send<ScriptExecutionResult>(
+            `${this.basePath}/${encodeURIComponent(trimmedName)}/execute`,
+            {
+                method: "POST",
+                ...options,
+            },
+        );
     }
 
     /**
