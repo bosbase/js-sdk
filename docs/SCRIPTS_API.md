@@ -5,6 +5,7 @@
 `pb.scripts` provides superuser-only helpers for storing and managing function code snippets (for example, Python scripts) in a dedicated database table. The SDK handles table creation, CRUD helpers, and automatic version bumps whenever a script is updated.
 
 **Table schema**
+- `id` (uuidv7, auto-generated)
 - `name` (primary key)
 - `content` (script body)
 - `description` (optional)
@@ -44,6 +45,7 @@ const script = await pb.scripts.create({
     description: "Hello from functions!",
 });
 
+console.log(script.id); // uuidv7
 console.log(script.version); // 1
 ```
 
@@ -97,5 +99,6 @@ console.log(removed); // true or false
 ## Notes
 
 - All methods throw if the caller is not authenticated as a superuser.
+- `id` is generated as a UUIDv7 string on insert and backfilled automatically for older rows.
 - Content is stored as plain text; 
 - Table creation runs automatically on first use of the service instance.

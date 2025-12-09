@@ -2996,6 +2996,7 @@ declare class RedisService extends BaseService {
     deleteKey(key: string, options?: CommonOptions): Promise<boolean>;
 }
 interface ScriptRecord {
+    id: string;
     name: string;
     content: string;
     description?: string;
@@ -3048,6 +3049,11 @@ declare class ScriptService extends BaseService {
     delete(name: string, options?: SendOptions): Promise<boolean>;
     private ensureTable;
     private mapRow;
+    private ensureIdColumn;
+    private backfillMissingIds;
+    private generateId;
+    private getRandomBytes;
+    private isDuplicateColumnError;
     private requireSuperuser;
     private escape;
     private cloneOptions;

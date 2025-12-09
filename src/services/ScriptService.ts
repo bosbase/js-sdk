@@ -5,6 +5,7 @@ import { ScriptCreate, ScriptRecord, ScriptUpdate } from "@/tools/script-types";
 export class ScriptService extends BaseService {
     private readonly tableName = "function_scripts";
     private readonly columnOrder = [
+        "id",
         "name",
         "content",
         "description",
@@ -32,8 +33,11 @@ export class ScriptService extends BaseService {
 
         await this.ensureTable(options);
 
+        const id = this.generateId();
         const now = new Date().toISOString();
-        const query = `INSERT INTO ${this.tableName} (name, content, description, version, created, updated) VALUES ('${this.escape(
+        const query = `INSERT INTO ${this.tableName} (id, name, content, description, version, created, updated) VALUES ('${this.escape(
+            id,
+        )}', '${this.escape(
             name,
         )}', '${this.escape(data.content)}', '${this.escape(
             data.description ?? "",
@@ -59,7 +63,7 @@ export class ScriptService extends BaseService {
 
         await this.ensureTable(options);
 
-        const query = `SELECT name, content, description, version, created, updated FROM ${this.tableName} WHERE name='${this.escape(
+        const query = `SELECT id, name, content, description, version, created, updated FROM ${this.tableName} WHERE name='${this.escape(
             trimmedName,
         )}' LIMIT 1;`;
         const result = await this.client.sql.execute(query, this.cloneOptions(options));
@@ -82,7 +86,7 @@ export class ScriptService extends BaseService {
 
         await this.ensureTable(options);
 
-        const query = `SELECT name, content, description, version, created, updated FROM ${this.tableName} ORDER BY name;`;
+        const query = `SELECT id, name, content, description, version, created, updated FROM ${this.tableName} ORDER BY name;`;
         const result = await this.client.sql.execute(query, this.cloneOptions(options));
 
         const rows = result.rows || [];
@@ -165,8 +169,14 @@ export class ScriptService extends BaseService {
             return;
         }
 
-        const query = `CREATE TABLE IF NOT EXISTS ${this.tableName} (name TEXT PRIMARY KEY, content TEXT NOT NULL, description TEXT DEFAULT '', version INTEGER NOT NULL DEFAULT 1, created TEXT DEFAULT (datetime('now')), updated TEXT DEFAULT (datetime('now')));`;
-        await this.client.sql.execute(query, this.cloneOptions(options));
+        const clone = this.cloneOptions(options);
+        const createTableQuery = `CREATE TABLE IF NOT EXISTS ${this.tableName} (id TEXT, name TEXT PRIMARY KEY, content TEXT NOT NULL, description TEXT DEFAULT '', version INTEGER NOT NULL DEFAULT 1, created TEXT DEFAULT (datetime('now')), updated TEXT DEFAULT (datetime('now')));`;
+        await this.client.sql.execute(createTableQuery, clone);
+        await this.ensureIdColumn(clone);
+        await this.client.sql.execute(
+            `CREATE UNIQUE INDEX IF NOT EXISTS ${this.tableName}_id_idx ON ${this.tableName}(id);`,
+            clone,
+        );
         this.tableReady = true;
     }
 
@@ -178,11 +188,12 @@ export class ScriptService extends BaseService {
             map[col] = row[index];
         });
 
-        if (!map.name) {
+        if (!map.id || !map.name) {
             throw new Error("Invalid script row returned from the server");
         }
 
         return {
+            id: String(map.id),
             name: map.name,
             content: map.content || "",
             description: map.description || "",
@@ -190,6 +201,85 @@ export class ScriptService extends BaseService {
             created: map.created,
             updated: map.updated,
         };
+    }
+
+    private async ensureIdColumn(options?: SendOptions): Promise<void> {
+        const clone = this.cloneOptions(options);
+        try {
+            await this.client.sql.execute(
+                `ALTER TABLE ${this.tableName} ADD COLUMN id TEXT;`,
+                clone,
+            );
+        } catch (err: any) {
+            if (!this.isDuplicateColumnError(err)) {
+                throw err;
+            }
+        }
+
+        await this.backfillMissingIds(clone);
+    }
+
+    private async backfillMissingIds(options?: SendOptions): Promise<void> {
+        const result = await this.client.sql.execute(
+            `SELECT name FROM ${this.tableName} WHERE id IS NULL OR TRIM(id) = ''`,
+            options,
+        );
+
+        const nameIndex = (result.columns || []).indexOf("name");
+        if (nameIndex === -1) {
+            return;
+        }
+
+        const rows = result.rows || [];
+        for (const row of rows) {
+            const name = row[nameIndex];
+            const id = this.generateId();
+            const updateQuery = `UPDATE ${this.tableName} SET id='${this.escape(
+                id,
+            )}' WHERE name='${this.escape(name)}';`;
+            await this.client.sql.execute(updateQuery, options);
+        }
+    }
+
+    private generateId(): string {
+        const bytes = this.getRandomBytes(16);
+        const timestamp = BigInt(Date.now());
+
+        bytes[0] = Number((timestamp >> 40n) & 0xffn);
+        bytes[1] = Number((timestamp >> 32n) & 0xffn);
+        bytes[2] = Number((timestamp >> 24n) & 0xffn);
+        bytes[3] = Number((timestamp >> 16n) & 0xffn);
+        bytes[4] = Number((timestamp >> 8n) & 0xffn);
+        bytes[5] = Number(timestamp & 0xffn);
+
+        bytes[6] = (bytes[6] & 0x0f) | 0x70; // set version to 7
+        bytes[8] = (bytes[8] & 0x3f) | 0x80; // set variant to 10xxxxxx
+
+        return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    private getRandomBytes(length: number): Uint8Array {
+        const bytes = new Uint8Array(length);
+        const crypto = (globalThis as any)?.crypto;
+        if (crypto?.getRandomValues) {
+            crypto.getRandomValues(bytes);
+            return bytes;
+        }
+
+        for (let i = 0; i < length; i++) {
+            bytes[i] = Math.floor(Math.random() * 256);
+        }
+
+        return bytes;
+    }
+
+    private isDuplicateColumnError(err: any): boolean {
+        const message =
+            (typeof err?.response?.message === "string" && err.response.message) ||
+            (typeof err?.message === "string" && err.message) ||
+            "";
+
+        return message.toLowerCase().includes("duplicate column name");
     }
 
     private requireSuperuser(): void {

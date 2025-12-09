@@ -1,4 +1,5 @@
 export interface ScriptRecord {
+    id: string;
     name: string;
     content: string;
     description?: string;

@@ -9,6 +9,44 @@ function parseQuery(config: RequestInit | { [key: string]: any } | undefined): s
     return body?.query || "";
 }
 
+function registerEnsureTableMocks(fetchMock: FetchMock, service: ScriptService) {
+    fetchMock.on({
+        method: "POST",
+        url: service.client.buildURL("/api/sql/execute"),
+        replyCode: 200,
+        replyBody: { rowsAffected: 0 },
+        additionalMatcher: (_, config) =>
+            parseQuery(config).startsWith("CREATE TABLE IF NOT EXISTS function_scripts"),
+    });
+
+    fetchMock.on({
+        method: "POST",
+        url: service.client.buildURL("/api/sql/execute"),
+        replyCode: 200,
+        replyBody: { rowsAffected: 0 },
+        additionalMatcher: (_, config) =>
+            parseQuery(config).includes("ALTER TABLE function_scripts ADD COLUMN id"),
+    });
+
+    fetchMock.on({
+        method: "POST",
+        url: service.client.buildURL("/api/sql/execute"),
+        replyCode: 200,
+        replyBody: { columns: ["name"], rows: [] },
+        additionalMatcher: (_, config) =>
+            parseQuery(config).startsWith("SELECT name FROM function_scripts WHERE id IS NULL"),
+    });
+
+    fetchMock.on({
+        method: "POST",
+        url: service.client.buildURL("/api/sql/execute"),
+        replyCode: 200,
+        replyBody: { rowsAffected: 0 },
+        additionalMatcher: (_, config) =>
+            parseQuery(config).includes("CREATE UNIQUE INDEX IF NOT EXISTS function_scripts_id_idx"),
+    });
+}
+
 describe("ScriptService", function () {
     const client = new Client("test_base_url");
     const fetchMock = new FetchMock();
@@ -40,22 +78,14 @@ describe("ScriptService", function () {
     });
 
     test("create() inserts a new script with version 1", async function () {
-        fetchMock.on({
-            method: "POST",
-            url: service.client.buildURL("/api/sql/execute"),
-            replyCode: 200,
-            replyBody: { rowsAffected: 0 },
-            additionalMatcher: (_, config) =>
-                parseQuery(config).startsWith("CREATE TABLE IF NOT EXISTS function_scripts"),
-        });
+        registerEnsureTableMocks(fetchMock, service);
 
         fetchMock.on({
             method: "POST",
             url: service.client.buildURL("/api/sql/execute"),
             replyCode: 200,
             replyBody: { rowsAffected: 1 },
-            additionalMatcher: (_, config) =>
-                parseQuery(config).startsWith("INSERT INTO function_scripts"),
+            additionalMatcher: (_, config) => parseQuery(config).startsWith("INSERT INTO function_scripts"),
         });
 
         fetchMock.on({
@@ -63,9 +93,10 @@ describe("ScriptService", function () {
             url: service.client.buildURL("/api/sql/execute"),
             replyCode: 200,
             replyBody: {
-                columns: ["name", "content", "description", "version", "created", "updated"],
+                columns: ["id", "name", "content", "description", "version", "created", "updated"],
                 rows: [
                     [
+                        "id123",
                         "hello",
                         "print('hi')",
                         "example script",
@@ -76,7 +107,7 @@ describe("ScriptService", function () {
                 ],
             },
             additionalMatcher: (_, config) =>
-                parseQuery(config).startsWith("SELECT name, content, description"),
+                parseQuery(config).startsWith("SELECT id, name, content, description"),
         });
 
         const result = await service.create({
@@ -85,20 +116,14 @@ describe("ScriptService", function () {
             description: "example script",
         });
 
+        assert.equal(result.id, "id123");
         assert.equal(result.name, "hello");
         assert.equal(result.description, "example script");
         assert.equal(result.version, 1);
     });
 
     test("update() increments the version and updates fields", async function () {
-        fetchMock.on({
-            method: "POST",
-            url: service.client.buildURL("/api/sql/execute"),
-            replyCode: 200,
-            replyBody: { rowsAffected: 0 },
-            additionalMatcher: (_, config) =>
-                parseQuery(config).startsWith("CREATE TABLE IF NOT EXISTS function_scripts"),
-        });
+        registerEnsureTableMocks(fetchMock, service);
 
         fetchMock.on({
             method: "POST",
@@ -116,9 +141,10 @@ describe("ScriptService", function () {
             url: service.client.buildURL("/api/sql/execute"),
             replyCode: 200,
             replyBody: {
-                columns: ["name", "content", "description", "version", "created", "updated"],
+                columns: ["id", "name", "content", "description", "version", "created", "updated"],
                 rows: [
                     [
+                        "id123",
                         "hello",
                         "print('hi')",
                         "new description",
@@ -128,7 +154,7 @@ describe("ScriptService", function () {
                     ],
                 ],
             },
-            additionalMatcher: (_, config) => parseQuery(config).startsWith("SELECT name, content, description"),
+            additionalMatcher: (_, config) => parseQuery(config).startsWith("SELECT id, name, content, description"),
         });
 
         const updated = await service.update("hello", { description: "new description" });
@@ -138,32 +164,29 @@ describe("ScriptService", function () {
     });
 
     test("list() returns mapped scripts", async function () {
-        fetchMock.on({
-            method: "POST",
-            url: service.client.buildURL("/api/sql/execute"),
-            replyCode: 200,
-            replyBody: { rowsAffected: 0 },
-            additionalMatcher: (_, config) =>
-                parseQuery(config).startsWith("CREATE TABLE IF NOT EXISTS function_scripts"),
-        });
+        registerEnsureTableMocks(fetchMock, service);
 
         fetchMock.on({
             method: "POST",
             url: service.client.buildURL("/api/sql/execute"),
             replyCode: 200,
             replyBody: {
-                columns: ["name", "content", "description", "version", "created", "updated"],
+                columns: ["id", "name", "content", "description", "version", "created", "updated"],
                 rows: [
-                    ["a", "print('a')", "first", "1", "2024-01-01T00:00:00Z", "2024-01-01T00:00:00Z"],
-                    ["b", "print('b')", "second", "3", "2024-01-01T00:00:00Z", "2024-01-02T00:00:00Z"],
+                    ["id-a", "a", "print('a')", "first", "1", "2024-01-01T00:00:00Z", "2024-01-01T00:00:00Z"],
+                    ["id-b", "b", "print('b')", "second", "3", "2024-01-01T00:00:00Z", "2024-01-02T00:00:00Z"],
                 ],
             },
-            additionalMatcher: (_, config) => parseQuery(config).startsWith("SELECT name, content, description"),
+            additionalMatcher: (_, config) => parseQuery(config).startsWith("SELECT id, name, content, description"),
         });
 
         const scripts = await service.list();
 
         assert.equal(scripts.length, 2);
+        assert.deepEqual(
+            scripts.map((s) => s.id),
+            ["id-a", "id-b"],
+        );
         assert.deepEqual(
             scripts.map((s) => [s.name, s.version]),
             [
@@ -174,14 +197,7 @@ describe("ScriptService", function () {
     });
 
     test("delete() removes a script", async function () {
-        fetchMock.on({
-            method: "POST",
-            url: service.client.buildURL("/api/sql/execute"),
-            replyCode: 200,
-            replyBody: { rowsAffected: 0 },
-            additionalMatcher: (_, config) =>
-                parseQuery(config).startsWith("CREATE TABLE IF NOT EXISTS function_scripts"),
-        });
+        registerEnsureTableMocks(fetchMock, service);
 
         fetchMock.on({
             method: "POST",
