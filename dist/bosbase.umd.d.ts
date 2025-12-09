@@ -2942,9 +2942,7 @@ interface ScriptUpdate {
     description?: string;
 }
 declare class ScriptService extends BaseService {
-    private readonly tableName;
-    private readonly columnOrder;
-    private tableReady;
+    private readonly basePath;
     /**
      * Create a new script entry with version 1.
      *
@@ -2975,16 +2973,7 @@ declare class ScriptService extends BaseService {
      * Requires superuser authentication.
      */
     delete(name: string, options?: SendOptions): Promise<boolean>;
-    private ensureTable;
-    private mapRow;
-    private ensureIdColumn;
-    private backfillMissingIds;
-    private generateId;
-    private getRandomBytes;
-    private isDuplicateColumnError;
     private requireSuperuser;
-    private escape;
-    private cloneOptions;
 }
 declare const pluginHttpMethods: readonly [
     "GET",

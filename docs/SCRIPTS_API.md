@@ -2,7 +2,7 @@
 
 ## Overview
 
-`pb.scripts` provides superuser-only helpers for storing and managing function code snippets (for example, Python scripts) in a dedicated database table. The SDK handles table creation, CRUD helpers, and automatic version bumps whenever a script is updated.
+`pb.scripts` provides superuser-only helpers for storing and managing function code snippets (for example, Python scripts) through the `/api/scripts` endpoints. The backend takes care of persistence and automatic version bumps whenever a script is updated.
 
 **Table schema**
 - `id` (uuidv7, auto-generated)

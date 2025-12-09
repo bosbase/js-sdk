@@ -3,48 +3,9 @@ import Client from "@/Client";
 import { ScriptService } from "@/services/ScriptService";
 import { FetchMock, dummyJWT } from "../mocks";
 
-function parseQuery(config: RequestInit | { [key: string]: any } | undefined): string {
+function parseBody(config: RequestInit | { [key: string]: any } | undefined): any {
     const raw = config?.body;
-    const body = typeof raw === "string" ? JSON.parse(raw) : raw;
-    return body?.query || "";
-}
-
-function registerEnsureTableMocks(fetchMock: FetchMock, service: ScriptService) {
-    fetchMock.on({
-        method: "POST",
-        url: service.client.buildURL("/api/sql/execute"),
-        replyCode: 200,
-        replyBody: { rowsAffected: 0 },
-        additionalMatcher: (_, config) =>
-            parseQuery(config).startsWith("CREATE TABLE IF NOT EXISTS function_scripts"),
-    });
-
-    fetchMock.on({
-        method: "POST",
-        url: service.client.buildURL("/api/sql/execute"),
-        replyCode: 200,
-        replyBody: { rowsAffected: 0 },
-        additionalMatcher: (_, config) =>
-            parseQuery(config).includes("ALTER TABLE function_scripts ADD COLUMN id"),
-    });
-
-    fetchMock.on({
-        method: "POST",
-        url: service.client.buildURL("/api/sql/execute"),
-        replyCode: 200,
-        replyBody: { columns: ["name"], rows: [] },
-        additionalMatcher: (_, config) =>
-            parseQuery(config).startsWith("SELECT name FROM function_scripts WHERE id IS NULL"),
-    });
-
-    fetchMock.on({
-        method: "POST",
-        url: service.client.buildURL("/api/sql/execute"),
-        replyCode: 200,
-        replyBody: { rowsAffected: 0 },
-        additionalMatcher: (_, config) =>
-            parseQuery(config).includes("CREATE UNIQUE INDEX IF NOT EXISTS function_scripts_id_idx"),
-    });
+    return typeof raw === "string" ? JSON.parse(raw) : raw;
 }
 
 describe("ScriptService", function () {
@@ -78,36 +39,23 @@ describe("ScriptService", function () {
     });
 
     test("create() inserts a new script with version 1", async function () {
-        registerEnsureTableMocks(fetchMock, service);
-
         fetchMock.on({
             method: "POST",
-            url: service.client.buildURL("/api/sql/execute"),
-            replyCode: 200,
-            replyBody: { rowsAffected: 1 },
-            additionalMatcher: (_, config) => parseQuery(config).startsWith("INSERT INTO function_scripts"),
-        });
-
-        fetchMock.on({
-            method: "POST",
-            url: service.client.buildURL("/api/sql/execute"),
-            replyCode: 200,
+            url: service.client.buildURL("/api/scripts"),
+            replyCode: 201,
             replyBody: {
-                columns: ["id", "name", "content", "description", "version", "created", "updated"],
-                rows: [
-                    [
-                        "id123",
-                        "hello",
-                        "print('hi')",
-                        "example script",
-                        "1",
-                        "2024-01-01T00:00:00Z",
-                        "2024-01-01T00:00:00Z",
-                    ],
-                ],
+                id: "id123",
+                name: "hello",
+                content: "print('hi')",
+                description: "example script",
+                version: 1,
+                created: "2024-01-01T00:00:00Z",
+                updated: "2024-01-01T00:00:00Z",
             },
-            additionalMatcher: (_, config) =>
-                parseQuery(config).startsWith("SELECT id, name, content, description"),
+            additionalMatcher: (_, config) => {
+                const body = parseBody(config);
+                return body?.name === "hello" && body?.content === "print('hi')";
+            },
         });
 
         const result = await service.create({
@@ -123,38 +71,20 @@ describe("ScriptService", function () {
     });
 
     test("update() increments the version and updates fields", async function () {
-        registerEnsureTableMocks(fetchMock, service);
-
         fetchMock.on({
-            method: "POST",
-            url: service.client.buildURL("/api/sql/execute"),
-            replyCode: 200,
-            replyBody: { rowsAffected: 1 },
-            additionalMatcher: (_, config) => {
-                const query = parseQuery(config);
-                return query.startsWith("UPDATE function_scripts") && query.includes("version = version + 1");
-            },
-        });
-
-        fetchMock.on({
-            method: "POST",
-            url: service.client.buildURL("/api/sql/execute"),
+            method: "PATCH",
+            url: service.client.buildURL("/api/scripts/hello"),
             replyCode: 200,
             replyBody: {
-                columns: ["id", "name", "content", "description", "version", "created", "updated"],
-                rows: [
-                    [
-                        "id123",
-                        "hello",
-                        "print('hi')",
-                        "new description",
-                        "2",
-                        "2024-01-01T00:00:00Z",
-                        "2024-01-02T00:00:00Z",
-                    ],
-                ],
+                id: "id123",
+                name: "hello",
+                content: "print('hi')",
+                description: "new description",
+                version: 2,
+                created: "2024-01-01T00:00:00Z",
+                updated: "2024-01-02T00:00:00Z",
             },
-            additionalMatcher: (_, config) => parseQuery(config).startsWith("SELECT id, name, content, description"),
+            additionalMatcher: (_, config) => parseBody(config)?.description === "new description",
         });
 
         const updated = await service.update("hello", { description: "new description" });
@@ -164,20 +94,32 @@ describe("ScriptService", function () {
     });
 
     test("list() returns mapped scripts", async function () {
-        registerEnsureTableMocks(fetchMock, service);
-
         fetchMock.on({
-            method: "POST",
-            url: service.client.buildURL("/api/sql/execute"),
+            method: "GET",
+            url: service.client.buildURL("/api/scripts"),
             replyCode: 200,
             replyBody: {
-                columns: ["id", "name", "content", "description", "version", "created", "updated"],
-                rows: [
-                    ["id-a", "a", "print('a')", "first", "1", "2024-01-01T00:00:00Z", "2024-01-01T00:00:00Z"],
-                    ["id-b", "b", "print('b')", "second", "3", "2024-01-01T00:00:00Z", "2024-01-02T00:00:00Z"],
+                items: [
+                    {
+                        id: "id-a",
+                        name: "a",
+                        content: "print('a')",
+                        description: "first",
+                        version: 1,
+                        created: "2024-01-01T00:00:00Z",
+                        updated: "2024-01-01T00:00:00Z",
+                    },
+                    {
+                        id: "id-b",
+                        name: "b",
+                        content: "print('b')",
+                        description: "second",
+                        version: 3,
+                        created: "2024-01-01T00:00:00Z",
+                        updated: "2024-01-02T00:00:00Z",
+                    },
                 ],
             },
-            additionalMatcher: (_, config) => parseQuery(config).startsWith("SELECT id, name, content, description"),
         });
 
         const scripts = await service.list();
@@ -197,14 +139,11 @@ describe("ScriptService", function () {
     });
 
     test("delete() removes a script", async function () {
-        registerEnsureTableMocks(fetchMock, service);
-
         fetchMock.on({
-            method: "POST",
-            url: service.client.buildURL("/api/sql/execute"),
-            replyCode: 200,
-            replyBody: { rowsAffected: 1 },
-            additionalMatcher: (_, config) => parseQuery(config).startsWith("DELETE FROM function_scripts"),
+            method: "DELETE",
+            url: service.client.buildURL("/api/scripts/hello"),
+            replyCode: 204,
+            replyBody: {},
         });
 
         const removed = await service.delete("hello");
