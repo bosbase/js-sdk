@@ -2923,6 +2923,63 @@ declare class RedisService extends BaseService {
      */
     deleteKey(key: string, options?: CommonOptions): Promise<boolean>;
 }
+interface ScriptRecord {
+    name: string;
+    content: string;
+    description?: string;
+    version: number;
+    created?: string;
+    updated?: string;
+}
+interface ScriptCreate {
+    name: string;
+    content: string;
+    description?: string;
+}
+interface ScriptUpdate {
+    content?: string;
+    description?: string;
+}
+declare class ScriptService extends BaseService {
+    private readonly tableName;
+    private readonly columnOrder;
+    private tableReady;
+    /**
+     * Create a new script entry with version 1.
+     *
+     * Requires superuser authentication.
+     */
+    create(data: ScriptCreate, options?: SendOptions): Promise<ScriptRecord>;
+    /**
+     * Retrieve a script by its name.
+     *
+     * Requires superuser authentication.
+     */
+    get(name: string, options?: SendOptions): Promise<ScriptRecord>;
+    /**
+     * List all scripts.
+     *
+     * Requires superuser authentication.
+     */
+    list(options?: SendOptions): Promise<Array<ScriptRecord>>;
+    /**
+     * Update an existing script and increment its version.
+     *
+     * Requires superuser authentication.
+     */
+    update(name: string, changes: ScriptUpdate, options?: SendOptions): Promise<ScriptRecord>;
+    /**
+     * Delete a script by its name.
+     *
+     * Requires superuser authentication.
+     */
+    delete(name: string, options?: SendOptions): Promise<boolean>;
+    private ensureTable;
+    private mapRow;
+    private requireSuperuser;
+    private escape;
+    private cloneOptions;
+}
 declare const pluginHttpMethods: readonly [
     "GET",
     "POST",
@@ -3196,6 +3253,10 @@ declare class Client {
      * An instance of the service that handles **Redis key APIs**.
      */
     readonly redis: RedisService;
+    /**
+     * An instance of the service that handles **Script storage APIs**.
+     */
+    readonly scripts: ScriptService;
     private cancelControllers;
     private recordServices;
     private enableAutoCancellation;

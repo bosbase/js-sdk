@@ -16,6 +16,7 @@ export * from "@/services/LangChaingoService";
 export * from "@/services/CacheService";
 export * from "@/services/GraphQLService";
 export * from "@/services/SQLService";
+export * from "@/services/ScriptService";
 export * from "@/services/RedisService";
 export * from "@/services/PluginService";
 export * from "@/stores/AsyncAuthStore";
@@ -29,5 +30,6 @@ export * from "@/tools/vector-types";
 export * from "@/tools/llm-types";
 export * from "@/tools/langchaingo-types";
 export * from "@/tools/sql-types";
+export * from "@/tools/script-types";
 
 export default Client;

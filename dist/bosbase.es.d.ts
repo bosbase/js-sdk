@@ -2995,6 +2995,63 @@ declare class RedisService extends BaseService {
      */
     deleteKey(key: string, options?: CommonOptions): Promise<boolean>;
 }
+interface ScriptRecord {
+    name: string;
+    content: string;
+    description?: string;
+    version: number;
+    created?: string;
+    updated?: string;
+}
+interface ScriptCreate {
+    name: string;
+    content: string;
+    description?: string;
+}
+interface ScriptUpdate {
+    content?: string;
+    description?: string;
+}
+declare class ScriptService extends BaseService {
+    private readonly tableName;
+    private readonly columnOrder;
+    private tableReady;
+    /**
+     * Create a new script entry with version 1.
+     *
+     * Requires superuser authentication.
+     */
+    create(data: ScriptCreate, options?: SendOptions): Promise<ScriptRecord>;
+    /**
+     * Retrieve a script by its name.
+     *
+     * Requires superuser authentication.
+     */
+    get(name: string, options?: SendOptions): Promise<ScriptRecord>;
+    /**
+     * List all scripts.
+     *
+     * Requires superuser authentication.
+     */
+    list(options?: SendOptions): Promise<Array<ScriptRecord>>;
+    /**
+     * Update an existing script and increment its version.
+     *
+     * Requires superuser authentication.
+     */
+    update(name: string, changes: ScriptUpdate, options?: SendOptions): Promise<ScriptRecord>;
+    /**
+     * Delete a script by its name.
+     *
+     * Requires superuser authentication.
+     */
+    delete(name: string, options?: SendOptions): Promise<boolean>;
+    private ensureTable;
+    private mapRow;
+    private requireSuperuser;
+    private escape;
+    private cloneOptions;
+}
 declare const pluginHttpMethods: readonly [
     "GET",
     "POST",
@@ -3288,6 +3345,10 @@ declare class Client {
      * An instance of the service that handles **Redis key APIs**.
      */
     readonly redis: RedisService;
+    /**
+     * An instance of the service that handles **Script storage APIs**.
+     */
+    readonly scripts: ScriptService;
     private cancelControllers;
     private recordServices;
     private enableAutoCancellation;
@@ -3546,4 +3607,4 @@ declare function getTokenPayload(token: string): {
  * @param [expirationThreshold] Time in seconds that will be subtracted from the token `exp` property.
  */
 declare function isTokenExpired(token: string, expirationThreshold?: number): boolean;
-export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, RealtimeMessage, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, SQLService, RedisKeySummary, RedisEntry, RedisListPage, CreateRedisKeyBody, UpdateRedisKeyBody, RedisService, PluginHTTPMethod, PluginSSEMethod, PluginWebSocketMethod, PluginMethod, PluginHTTPMethodInput, PluginSSEMethodInput, PluginWebSocketMethodInput, PluginMethodInput, PluginRequestOptions, PluginSSERequestOptions, PluginWebSocketRequestOptions, PluginService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, SqlTableDefinition, SqlTableImportResult, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse, SQLExecuteRequest, SQLExecuteResponse };
+export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, RealtimeMessage, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, SQLService, ScriptService, RedisKeySummary, RedisEntry, RedisListPage, CreateRedisKeyBody, UpdateRedisKeyBody, RedisService, PluginHTTPMethod, PluginSSEMethod, PluginWebSocketMethod, PluginMethod, PluginHTTPMethodInput, PluginSSEMethodInput, PluginWebSocketMethodInput, PluginMethodInput, PluginRequestOptions, PluginSSERequestOptions, PluginWebSocketRequestOptions, PluginService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, SqlTableDefinition, SqlTableImportResult, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse, SQLExecuteRequest, SQLExecuteResponse, ScriptRecord, ScriptCreate, ScriptUpdate };

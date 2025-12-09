@@ -18,6 +18,7 @@ import { LangChaingoService } from "@/services/LangChaingoService";
 import { GraphQLService } from "@/services/GraphQLService";
 import { SQLService } from "@/services/SQLService";
 import { RedisService } from "@/services/RedisService";
+import { ScriptService } from "@/services/ScriptService";
 import {
     PluginMethodInput,
     PluginHTTPMethodInput,
@@ -216,6 +217,11 @@ export default class Client {
      */
     readonly redis: RedisService;
 
+    /**
+     * An instance of the service that handles **Script storage APIs**.
+     */
+    readonly scripts: ScriptService;
+
     private cancelControllers: { [key: string]: AbortController } = {};
     private recordServices: { [key: string]: RecordService } = {};
     private enableAutoCancellation: boolean = true;
@@ -251,6 +257,7 @@ export default class Client {
         this.graphql = new GraphQLService(this);
         this.sql = new SQLService(this);
         this.redis = new RedisService(this);
+        this.scripts = new ScriptService(this);
         this.pluginService = new PluginService(this);
     }
 
