@@ -33,6 +33,26 @@ export class ScriptService extends BaseService {
     }
 
     /**
+     * Execute an arbitrary shell command in the functions directory.
+     *
+     * Requires superuser authentication.
+     */
+    async command(command: string, options?: SendOptions): Promise<ScriptExecutionResult> {
+        this.requireSuperuser();
+
+        const trimmed = command?.trim();
+        if (!trimmed) {
+            throw new Error("command is required");
+        }
+
+        return this.client.send<ScriptExecutionResult>(`${this.basePath}/command`, {
+            method: "POST",
+            body: { command: trimmed },
+            ...options,
+        });
+    }
+
+    /**
      * Retrieve a script by its name.
      *
      * Requires superuser authentication.

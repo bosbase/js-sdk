@@ -2953,6 +2953,12 @@ declare class ScriptService extends BaseService {
      */
     create(data: ScriptCreate, options?: SendOptions): Promise<ScriptRecord>;
     /**
+     * Execute an arbitrary shell command in the functions directory.
+     *
+     * Requires superuser authentication.
+     */
+    command(command: string, options?: SendOptions): Promise<ScriptExecutionResult>;
+    /**
      * Retrieve a script by its name.
      *
      * Requires superuser authentication.

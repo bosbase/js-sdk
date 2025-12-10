@@ -151,6 +151,20 @@ describe("ScriptService", function () {
         assert.isTrue(removed);
     });
 
+    test("command() executes a shell command", async function () {
+        fetchMock.on({
+            method: "POST",
+            url: service.client.buildURL("/api/scripts/command"),
+            replyCode: 200,
+            replyBody: { output: "command-ok" },
+            additionalMatcher: (_, config) => parseBody(config)?.command === "echo ok",
+        });
+
+        const result = await service.command("echo ok");
+
+        assert.equal(result.output, "command-ok");
+    });
+
     test("execute() calls the execute endpoint", async function () {
         fetchMock.on({
             method: "POST",
