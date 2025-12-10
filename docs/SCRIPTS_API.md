@@ -99,12 +99,22 @@ console.log(result.output); // console output from the python script
 
 ## Running Shell Commands
 
-Run arbitrary shell commands in the functions directory (defaults to `EXECUTE_PATH` env or `/pb/functions`). Useful for managing dependencies, inspecting files, etc.
+Run arbitrary shell commands in the functions directory (defaults to `EXECUTE_PATH` env or `/pb/functions`). Useful for managing dependencies, inspecting files, etc. **Superuser authentication is required.**
 
 ```javascript
 const result = await pb.scripts.command(`cat pyproject.toml`);
 console.log(result.output);
+
+const result2 = await pb.scripts.command(`uv add "httpx>0.1.0");
+console.log(result2.output);
+
+
 ```
+
+Notes for `command`:
+- Superuser auth is required.
+- Commands run with `EXECUTE_PATH` as the working directory and inherit environment vars (including `EXECUTE_PATH`).
+- The combined stdout/stderr is returned as `result.output`; non-zero exit codes surface as errors.
 
 ## Deleting Scripts
 
