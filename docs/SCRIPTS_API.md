@@ -101,6 +101,27 @@ const result = await pb.scripts.execute("hello.py");
 console.log(result.output); // console output from the python script
 ```
 
+## Managing Script Permissions
+
+Use `pb.scriptsPermissions` to control who can call `/api/scripts/{name}/execute`.
+Valid `content` values are:
+- `anonymous`: anyone can execute
+- `user`: authenticated users in the `users` collection (and superusers)
+- `superuser`: only superusers
+
+If no permission row exists for a script, execution is superuser-only.
+
+```javascript
+// create or update permissions (superuser required)
+await pb.scriptsPermissions.create({
+    scriptName: "hello.py",
+    content: "user",
+});
+
+const perm = await pb.scriptsPermissions.get("hello.py");
+console.log(perm.content); // "user"
+```
+
 ## Running Shell Commands
 
 Run arbitrary shell commands in the functions directory (defaults to `EXECUTE_PATH` env or `/pb/functions`). Useful for managing dependencies, inspecting files, etc. **Superuser authentication is required.**
