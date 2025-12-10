@@ -91,6 +91,10 @@ await pb.scripts.update("hello.py.py", { description: "Docs-only tweak" });
 
 Run a stored script via the backend runner (uses `/api/scripts/{name}/execute`).
 The server loads the latest script content, writes it under `EXECUTE_PATH` (defaults to `/pb/functions`), activates `.venv/bin/activate`, and runs `python <name>`. The combined stdout/stderr is returned.
+Execution permission is controlled by `pb.scriptsPermissions`:
+- `anonymous`: anyone can execute
+- `user`: requires an authenticated user (or superuser)
+- `superuser`: only superuser (default when no permission entry exists)
 
 ```javascript
 const result = await pb.scripts.execute("hello.py");
@@ -105,7 +109,7 @@ Run arbitrary shell commands in the functions directory (defaults to `EXECUTE_PA
 const result = await pb.scripts.command(`cat pyproject.toml`);
 console.log(result.output);
 
-const result2 = await pb.scripts.command(`uv add "httpx>0.1.0");
+const result2 = await pb.scripts.command(`uv add "httpx>0.1.0"`);
 console.log(result2.output);
 
 
@@ -115,6 +119,26 @@ Notes for `command`:
 - Superuser auth is required.
 - Commands run with `EXECUTE_PATH` as the working directory and inherit environment vars (including `EXECUTE_PATH`).
 - The combined stdout/stderr is returned as `result.output`; non-zero exit codes surface as errors.
+
+## Managing Script Permissions
+
+Superusers can define who may execute a script using `pb.scriptsPermissions`.
+
+Allowed permission levels: `"anonymous"`, `"user"`, `"superuser"` (default when no entry exists).
+
+```javascript
+await pb.scriptsPermissions.create({
+    scriptName: "hello.py",
+    content: "user", // allow logged-in users and superusers
+});
+
+const perm = await pb.scriptsPermissions.get("hello.py");
+console.log(perm.content); // user
+
+await pb.scriptsPermissions.update("hello.py", { content: "anonymous" });
+
+await pb.scriptsPermissions.delete("hello.py"); // back to superuser-only execution
+```
 
 ## Deleting Scripts
 
@@ -127,9 +151,9 @@ console.log(removed); // true or false
 
 ## Notes
 
-- All methods throw if the caller is not authenticated as a superuser.
+- Script CRUD and `scriptsPermissions` require superuser auth; `scripts.execute` obeys the stored permission level; `command` is superuser-only.
 - `id` is generated as a UUIDv7 string on insert and backfilled automatically for older rows.
 - Execution uses the directory from `EXECUTE_PATH` env/docker-compose (default `/pb/functions`) and expects a `.venv` there with Python available.
 - `command` also runs inside `EXECUTE_PATH` and returns combined stdout/stderr.
-- Content is stored as plain text; 
+- Content is stored as plain text.
 - Table creation runs automatically on first use of the service instance.

@@ -2944,6 +2944,25 @@ interface ScriptUpdate {
 interface ScriptExecutionResult {
     output: string;
 }
+interface ScriptPermissionRecord {
+    id: string;
+    scriptId?: string;
+    scriptName: string;
+    content: "anonymous" | "user" | "superuser";
+    version: number;
+    created?: string;
+    updated?: string;
+}
+interface ScriptPermissionCreate {
+    scriptName: string;
+    scriptId?: string;
+    content: string;
+}
+interface ScriptPermissionUpdate {
+    scriptName?: string;
+    scriptId?: string;
+    content?: string;
+}
 declare class ScriptService extends BaseService {
     private readonly basePath;
     /**
@@ -2988,6 +3007,14 @@ declare class ScriptService extends BaseService {
      * Requires superuser authentication.
      */
     delete(name: string, options?: SendOptions): Promise<boolean>;
+    private requireSuperuser;
+}
+declare class ScriptPermissionsService extends BaseService {
+    private readonly basePath;
+    create(data: ScriptPermissionCreate, options?: SendOptions): Promise<ScriptPermissionRecord>;
+    get(scriptName: string, options?: SendOptions): Promise<ScriptPermissionRecord>;
+    update(scriptName: string, data: ScriptPermissionUpdate, options?: SendOptions): Promise<ScriptPermissionRecord>;
+    delete(scriptName: string, options?: SendOptions): Promise<boolean>;
     private requireSuperuser;
 }
 declare const pluginHttpMethods: readonly [
@@ -3267,6 +3294,10 @@ declare class Client {
      * An instance of the service that handles **Script storage APIs**.
      */
     readonly scripts: ScriptService;
+    /**
+     * An instance of the service that handles **Script permissions APIs**.
+     */
+    readonly scriptsPermissions: ScriptPermissionsService;
     private cancelControllers;
     private recordServices;
     private enableAutoCancellation;
