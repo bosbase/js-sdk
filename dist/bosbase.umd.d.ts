@@ -2944,6 +2944,25 @@ interface ScriptUpdate {
 interface ScriptExecutionResult {
     output: string;
 }
+interface ScriptUploadParams {
+    /**
+     * File content to upload (Blob/File or React Native file object).
+     */
+    file: Blob | File | {
+        uri: string;
+        name?: string;
+        type?: string;
+    };
+    /**
+     * Target relative path (including filename) inside EXECUTE_PATH.
+     * Defaults to the uploaded file name when omitted.
+     */
+    path?: string;
+}
+interface ScriptUploadResult {
+    output: string;
+    path?: string;
+}
 interface ScriptPermissionRecord {
     id: string;
     scriptId?: string;
@@ -2978,6 +2997,13 @@ declare class ScriptService extends BaseService {
      */
     command(command: string, options?: SendOptions): Promise<ScriptExecutionResult>;
     /**
+     * Upload a file to the EXECUTE_PATH directory (default /pb/functions).
+     * Overwrites existing files and returns the upload output.
+     *
+     * Requires superuser authentication.
+     */
+    upload(fileOrParams: FormData | ScriptUploadParams | Blob | File, options?: SendOptions): Promise<ScriptUploadResult>;
+    /**
      * Retrieve a script by its name.
      *
      * Requires superuser authentication.
@@ -3007,6 +3033,7 @@ declare class ScriptService extends BaseService {
      * Requires superuser authentication.
      */
     delete(name: string, options?: SendOptions): Promise<boolean>;
+    private prepareUploadBody;
     private requireSuperuser;
 }
 declare class ScriptPermissionsService extends BaseService {

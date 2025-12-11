@@ -1,6 +1,13 @@
 import { BaseService } from "@/services/BaseService";
 import { SendOptions } from "@/tools/options";
-import { ScriptCreate, ScriptExecutionResult, ScriptRecord, ScriptUpdate } from "@/tools/script-types";
+import {
+    ScriptCreate,
+    ScriptExecutionResult,
+    ScriptRecord,
+    ScriptUpdate,
+    ScriptUploadParams,
+    ScriptUploadResult,
+} from "@/tools/script-types";
 
 export class ScriptService extends BaseService {
     private readonly basePath = "/api/scripts";
@@ -48,6 +55,27 @@ export class ScriptService extends BaseService {
         return this.client.send<ScriptExecutionResult>(`${this.basePath}/command`, {
             method: "POST",
             body: { command: trimmed },
+            ...options,
+        });
+    }
+
+    /**
+     * Upload a file to the EXECUTE_PATH directory (default /pb/functions).
+     * Overwrites existing files and returns the upload output.
+     *
+     * Requires superuser authentication.
+     */
+    async upload(
+        fileOrParams: FormData | ScriptUploadParams | Blob | File,
+        options?: SendOptions,
+    ): Promise<ScriptUploadResult> {
+        this.requireSuperuser();
+
+        const body = this.prepareUploadBody(fileOrParams);
+
+        return this.client.send<ScriptUploadResult>(`${this.basePath}/upload`, {
+            method: "POST",
+            body,
             ...options,
         });
     }
@@ -158,6 +186,53 @@ export class ScriptService extends BaseService {
         });
 
         return true;
+    }
+
+    private prepareUploadBody(
+        fileOrParams: FormData | ScriptUploadParams | Blob | File,
+    ): FormData | ScriptUploadParams {
+        if (typeof FormData !== "undefined" && fileOrParams instanceof FormData) {
+            return fileOrParams;
+        }
+
+        const params =
+            fileOrParams && typeof fileOrParams === "object" && "file" in (fileOrParams as any)
+                ? (fileOrParams as ScriptUploadParams)
+                : ({ file: fileOrParams } as ScriptUploadParams);
+
+        const file = params.file;
+        if (!file) {
+            throw new Error("file is required");
+        }
+
+        const path = params.path?.trim() || "";
+        const filename =
+            path || (typeof (file as any)?.name === "string" ? (file as any).name : "") || "upload.bin";
+
+        if (typeof FormData !== "undefined") {
+            const form = new FormData();
+            const useNamedAppend =
+                (typeof Blob !== "undefined" && file instanceof Blob) ||
+                (typeof File !== "undefined" && file instanceof File);
+            if (useNamedAppend && filename) {
+                form.append("file", file as any, filename);
+            } else {
+                form.append("file", file as any);
+            }
+
+            if (path) {
+                form.append("path", path);
+            }
+
+            return form;
+        }
+
+        const body: ScriptUploadParams = { file };
+        if (path) {
+            body.path = path;
+        }
+
+        return body;
     }
 
     private requireSuperuser(): void {

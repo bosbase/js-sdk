@@ -141,6 +141,33 @@ Notes for `command`:
 - Commands run with `EXECUTE_PATH` as the working directory and inherit environment vars (including `EXECUTE_PATH`).
 - The combined stdout/stderr is returned as `result.output`; non-zero exit codes surface as errors.
 
+## Uploading Files to `EXECUTE_PATH`
+
+Upload arbitrary files into the functions directory (from `EXECUTE_PATH` env/Docker Compose, default `/pb/functions`). Existing files are overwritten and stored with read/write/execute permissions. **Superuser authentication is required.**
+
+```javascript
+const uploadName = "hello-upload.sh";
+const uploadContent = `#!/bin/sh
+echo "upload-ok"
+`;
+
+const uploadFile = new File([uploadContent], uploadName, { type: "text/x-shellscript" });
+
+const upload = await pb.scripts.upload({
+    file: uploadFile,
+    path: uploadName, // optional; defaults to uploadFile.name
+});
+console.log(upload.output); // e.g., "uploaded hello-upload.sh to /pb/functions"
+
+const runUploaded = await pb.scripts.command(`./${uploadName}`);
+console.log(runUploaded.output); // upload-ok
+```
+
+Notes for `upload`:
+- Superuser auth is required and files are written under the configured `EXECUTE_PATH` (fallback `/pb/functions`).
+- The `path` sets the relative destination (including filename); defaults to the uploaded file name.
+- Files are written with read/write/execute permissions and overwrite any existing file with the same path.
+
 ## Managing Script Permissions
 
 Superusers can define who may execute a script using `pb.scriptsPermissions`.
