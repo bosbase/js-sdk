@@ -3028,6 +3028,13 @@ declare class ScriptService extends BaseService {
      */
     execute(name: string, options?: SendOptions): Promise<ScriptExecutionResult>;
     /**
+     * Execute a WASM file inside EXECUTE_PATH using wasmedge.
+     *
+     * Permission is determined by script permissions for the provided wasm name.
+     * Default permission is superuser-only when no entry exists.
+     */
+    wasm(cliOptions: string, wasmName: string, params?: string, requestOptions?: SendOptions): Promise<ScriptExecutionResult>;
+    /**
      * Delete a script by its name.
      *
      * Requires superuser authentication.

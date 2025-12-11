@@ -23,6 +23,12 @@ export interface ScriptExecutionResult {
     output: string;
 }
 
+export interface ScriptWasmParams {
+    options?: string;
+    wasm: string;
+    params?: string;
+}
+
 export interface ScriptUploadParams {
     /**
      * File content to upload (Blob/File or React Native file object).

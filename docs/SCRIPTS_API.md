@@ -168,6 +168,31 @@ Notes for `upload`:
 - The `path` sets the relative destination (including filename); defaults to the uploaded file name.
 - Files are written with read/write/execute permissions and overwrite any existing file with the same path.
 
+## Executing WASM files
+
+Run a WASM file in `EXECUTE_PATH` using `wasmedge`, with permissions checked from `function_script_permissions` by the wasm file name.
+
+```javascript
+// optional: upload a custom wasmedge binary into EXECUTE_PATH
+await pb.scripts.upload({
+    file: new Blob([`#!/bin/sh\necho "wasm-runner $@"\n`], { type: "text/x-shellscript" }),
+    path: "wasmedge",
+});
+
+const result = await pb.scripts.wasm(
+    '--reactor --env "REDIS_URL=redis://localhost/"', // CLI options
+    "fibonacci.wasm", // wasm filename
+    "fib 10", // parameters passed to wasm
+);
+
+console.log(result.output); // wasm-runner --reactor --env "REDIS_URL=redis://localhost/" fibonacci.wasm fib 10
+```
+
+Notes for `wasm`:
+- Permission comes from `function_script_permissions` with `script_name = <wasm name>`: `anonymous`, `user`, `superuser` (default).
+- Commands run in `EXECUTE_PATH` (env/Docker Compose, default `/pb/functions`) with that directory added to `PATH`.
+- Options and params are concatenated into `wasmedge <options> <wasm> <params>`; output combines stdout/stderr.
+
 ## Managing Script Permissions
 
 Superusers can define who may execute a script using `pb.scriptsPermissions`.

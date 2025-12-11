@@ -7,6 +7,7 @@ import {
     ScriptUpdate,
     ScriptUploadParams,
     ScriptUploadResult,
+    ScriptWasmParams,
 } from "@/tools/script-types";
 
 export class ScriptService extends BaseService {
@@ -165,6 +166,36 @@ export class ScriptService extends BaseService {
                 ...options,
             },
         );
+    }
+
+    /**
+     * Execute a WASM file inside EXECUTE_PATH using wasmedge.
+     *
+     * Permission is determined by script permissions for the provided wasm name.
+     * Default permission is superuser-only when no entry exists.
+     */
+    async wasm(
+        cliOptions: string,
+        wasmName: string,
+        params?: string,
+        requestOptions?: SendOptions,
+    ): Promise<ScriptExecutionResult> {
+        const trimmedName = wasmName?.trim();
+        if (!trimmedName) {
+            throw new Error("wasm name is required");
+        }
+
+        const body: ScriptWasmParams = {
+            options: cliOptions?.trim() || "",
+            wasm: trimmedName,
+            params: params?.trim() || "",
+        };
+
+        return this.client.send<ScriptExecutionResult>(`${this.basePath}/wasm`, {
+            method: "POST",
+            body,
+            ...requestOptions,
+        });
     }
 
     /**
