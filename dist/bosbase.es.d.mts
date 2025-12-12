@@ -3103,7 +3103,7 @@ declare class ScriptService extends BaseService {
      *
      * Requires superuser authentication.
      */
-    execute(name: string, options?: SendOptions): Promise<ScriptExecutionResult>;
+    execute(name: string, argsOrOptions?: Array<string> | SendOptions, requestOptions?: SendOptions): Promise<ScriptExecutionResult>;
     /**
      * Execute a WASM file inside EXECUTE_PATH using wasmedge.
      *

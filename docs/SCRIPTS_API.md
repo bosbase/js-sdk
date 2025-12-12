@@ -91,13 +91,15 @@ await pb.scripts.update("hello.py.py", { description: "Docs-only tweak" });
 
 Run a stored script via the backend runner (uses `/api/scripts/{name}/execute`).
 The server loads the latest script content, writes it under `EXECUTE_PATH` (defaults to `/pb/functions`), activates `.venv/bin/activate`, and runs `python <name>`. The combined stdout/stderr is returned.
+Pass optional CLI arguments as an array (second parameter to `execute`) and they will be appended to the python invocation in order, e.g., `python add.py 10 20`.
 Execution permission is controlled by `pb.scriptsPermissions`:
 - `anonymous`: anyone can execute
 - `user`: requires an authenticated user (or superuser)
 - `superuser`: only superuser (default when no permission entry exists)
 
 ```javascript
-const result = await pb.scripts.execute("hello.py");
+// pass optional CLI arguments as the second parameter
+const result = await pb.scripts.execute("add.py", ["10", "20"]);
 console.log(result.output); // console output from the python script
 ```
 

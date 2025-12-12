@@ -151,7 +151,11 @@ export class ScriptService extends BaseService {
      *
      * Requires superuser authentication.
      */
-    async execute(name: string, options?: SendOptions): Promise<ScriptExecutionResult> {
+    async execute(
+        name: string,
+        argsOrOptions?: Array<string> | SendOptions,
+        requestOptions?: SendOptions,
+    ): Promise<ScriptExecutionResult> {
         this.requireSuperuser();
 
         const trimmedName = name?.trim();
@@ -159,10 +163,23 @@ export class ScriptService extends BaseService {
             throw new Error("script name is required");
         }
 
+        let args: Array<string> | undefined;
+        let options: SendOptions | undefined;
+
+        if (Array.isArray(argsOrOptions)) {
+            args = argsOrOptions.map((arg) => (typeof arg === "string" ? arg : String(arg)));
+            options = requestOptions;
+        } else {
+            options = argsOrOptions;
+        }
+
+        const body = typeof args !== "undefined" ? { arguments: args } : undefined;
+
         return this.client.send<ScriptExecutionResult>(
             `${this.basePath}/${encodeURIComponent(trimmedName)}/execute`,
             {
                 method: "POST",
+                ...(body ? { body } : {}),
                 ...options,
             },
         );
