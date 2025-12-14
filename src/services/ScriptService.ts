@@ -2,6 +2,7 @@ import { BaseService } from "@/services/BaseService";
 import { SendOptions } from "@/tools/options";
 import {
     ScriptCreate,
+    ScriptExecuteParams,
     ScriptExecutionResult,
     ScriptRecord,
     ScriptUpdate,
@@ -149,12 +150,16 @@ export class ScriptService extends BaseService {
     /**
      * Execute a stored script.
      *
+     * @param name - The name of the script to execute
+     * @param paramsOrArgs - Either a params object with arguments and function_name, or an array of string arguments (for backward compatibility)
+     * @param options - Optional send options
+     *
      * Requires superuser authentication.
      */
     async execute(
         name: string,
-        argsOrOptions?: Array<string> | SendOptions,
-        requestOptions?: SendOptions,
+        paramsOrArgs?: ScriptExecuteParams | Array<string> | SendOptions,
+        options?: SendOptions,
     ): Promise<ScriptExecutionResult> {
         this.requireSuperuser();
 
@@ -163,24 +168,43 @@ export class ScriptService extends BaseService {
             throw new Error("script name is required");
         }
 
-        let args: Array<string> | undefined;
-        let options: SendOptions | undefined;
+        let body: ScriptExecuteParams | undefined;
+        let sendOptions: SendOptions | undefined;
 
-        if (Array.isArray(argsOrOptions)) {
-            args = argsOrOptions.map((arg) => (typeof arg === "string" ? arg : String(arg)));
-            options = requestOptions;
+        // Handle different parameter patterns for backward compatibility
+        if (Array.isArray(paramsOrArgs)) {
+            // Old signature: execute(name, args[], options?)
+            body = { arguments: paramsOrArgs };
+            sendOptions = options;
+        } else if (
+            paramsOrArgs &&
+            typeof paramsOrArgs === "object" &&
+            ("arguments" in paramsOrArgs || "function_name" in paramsOrArgs)
+        ) {
+            // New signature: execute(name, { arguments: [], function_name: "..." }, options?)
+            body = paramsOrArgs as ScriptExecuteParams;
+            sendOptions = options;
+        } else if (paramsOrArgs && typeof paramsOrArgs === "object") {
+            // Old signature: execute(name, options?)
+            sendOptions = paramsOrArgs as SendOptions;
         } else {
-            options = argsOrOptions;
+            sendOptions = options;
         }
 
-        const body = typeof args !== "undefined" ? { arguments: args } : undefined;
+        // Ensure body has the correct structure
+        if (body) {
+            if (body.arguments) {
+                body.arguments = body.arguments.map((arg) => (typeof arg === "string" ? arg : String(arg)));
+            }
+            // function_name is optional and will be handled by the backend
+        }
 
         return this.client.send<ScriptExecutionResult>(
             `${this.basePath}/${encodeURIComponent(trimmedName)}/execute`,
             {
                 method: "POST",
                 ...(body ? { body } : {}),
-                ...options,
+                ...sendOptions,
             },
         );
     }

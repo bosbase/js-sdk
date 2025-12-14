@@ -178,6 +178,64 @@ describe("ScriptService", function () {
         assert.equal(result.output, "exec-ok");
     });
 
+    test("execute() with arguments calls the execute endpoint with arguments", async function () {
+        fetchMock.on({
+            method: "POST",
+            url: service.client.buildURL("/api/scripts/hello/execute"),
+            replyCode: 200,
+            replyBody: { output: "exec-ok" },
+            additionalMatcher: (_, config) => {
+                const body = parseBody(config);
+                return Array.isArray(body?.arguments) && body.arguments.length === 2;
+            },
+        });
+
+        const result = await service.execute("hello", ["arg1", "arg2"]);
+
+        assert.equal(result.output, "exec-ok");
+    });
+
+    test("execute() with function_name calls the execute endpoint with function_name", async function () {
+        fetchMock.on({
+            method: "POST",
+            url: service.client.buildURL("/api/scripts/hello/execute"),
+            replyCode: 200,
+            replyBody: { output: "exec-ok" },
+            additionalMatcher: (_, config) => {
+                const body = parseBody(config);
+                return body?.function_name === "myFunction";
+            },
+        });
+
+        const result = await service.execute("hello", { function_name: "myFunction" });
+
+        assert.equal(result.output, "exec-ok");
+    });
+
+    test("execute() with arguments and function_name calls the execute endpoint with both", async function () {
+        fetchMock.on({
+            method: "POST",
+            url: service.client.buildURL("/api/scripts/hello/execute"),
+            replyCode: 200,
+            replyBody: { output: "exec-ok" },
+            additionalMatcher: (_, config) => {
+                const body = parseBody(config);
+                return (
+                    body?.function_name === "myFunction" &&
+                    Array.isArray(body?.arguments) &&
+                    body.arguments.length === 2
+                );
+            },
+        });
+
+        const result = await service.execute("hello", {
+            arguments: ["arg1", "arg2"],
+            function_name: "myFunction",
+        });
+
+        assert.equal(result.output, "exec-ok");
+    });
+
     test("requires superuser auth", async function () {
         client.authStore.clear();
 

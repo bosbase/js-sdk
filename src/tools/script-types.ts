@@ -23,6 +23,18 @@ export interface ScriptExecutionResult {
     output: string;
 }
 
+export interface ScriptExecuteParams {
+    /**
+     * Command-line arguments to pass to the script.
+     */
+    arguments?: Array<string>;
+    /**
+     * Function name to execute within the script.
+     * Defaults to "main" if not provided.
+     */
+    function_name?: string;
+}
+
 export interface ScriptWasmParams {
     options?: string;
     wasm: string;

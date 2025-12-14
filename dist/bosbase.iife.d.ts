@@ -2944,6 +2944,17 @@ interface ScriptUpdate {
 interface ScriptExecutionResult {
     output: string;
 }
+interface ScriptExecuteParams {
+    /**
+     * Command-line arguments to pass to the script.
+     */
+    arguments?: Array<string>;
+    /**
+     * Function name to execute within the script.
+     * Defaults to "main" if not provided.
+     */
+    function_name?: string;
+}
 interface ScriptUploadParams {
     /**
      * File content to upload (Blob/File or React Native file object).
@@ -3024,9 +3035,13 @@ declare class ScriptService extends BaseService {
     /**
      * Execute a stored script.
      *
+     * @param name - The name of the script to execute
+     * @param paramsOrArgs - Either a params object with arguments and function_name, or an array of string arguments (for backward compatibility)
+     * @param options - Optional send options
+     *
      * Requires superuser authentication.
      */
-    execute(name: string, argsOrOptions?: Array<string> | SendOptions, requestOptions?: SendOptions): Promise<ScriptExecutionResult>;
+    execute(name: string, paramsOrArgs?: ScriptExecuteParams | Array<string> | SendOptions, options?: SendOptions): Promise<ScriptExecutionResult>;
     /**
      * Execute a WASM file inside EXECUTE_PATH using wasmedge.
      *
