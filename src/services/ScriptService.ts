@@ -2,6 +2,8 @@ import { BaseService } from "@/services/BaseService";
 import { SendOptions } from "@/tools/options";
 import {
     ScriptCreate,
+    ScriptCommandAsyncResponse,
+    ScriptCommandJob,
     ScriptExecuteParams,
     ScriptExecutionResult,
     ScriptRecord,
@@ -54,9 +56,40 @@ export class ScriptService extends BaseService {
             throw new Error("command is required");
         }
 
+        const extraBody = (options && typeof options === "object" ? (options as any).body : null) || {};
+
         return this.client.send<ScriptExecutionResult>(`${this.basePath}/command`, {
             method: "POST",
-            body: { command: trimmed },
+            body: { ...extraBody, command: trimmed },
+            ...options,
+        });
+    }
+
+    /**
+     * Execute an arbitrary shell command in async mode.
+     * The command continues running even if the client disconnects.
+     */
+    async commandAsync(command: string, options?: SendOptions): Promise<ScriptCommandAsyncResponse> {
+        return this.client.send<ScriptCommandAsyncResponse>(`${this.basePath}/command`, {
+            method: "POST",
+            body: { ...(options?.body || {}), command: command?.trim(), async: true },
+            ...options,
+        });
+    }
+
+    /**
+     * Fetch async command status by job id.
+     */
+    async commandStatus(id: string, options?: SendOptions): Promise<ScriptCommandJob> {
+        this.requireSuperuser();
+
+        const trimmed = id?.trim();
+        if (!trimmed) {
+            throw new Error("command id is required");
+        }
+
+        return this.client.send<ScriptCommandJob>(`${this.basePath}/command/${encodeURIComponent(trimmed)}`, {
+            method: "GET",
             ...options,
         });
     }

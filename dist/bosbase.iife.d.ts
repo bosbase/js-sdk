@@ -2944,6 +2944,20 @@ interface ScriptUpdate {
 interface ScriptExecutionResult {
     output: string;
 }
+type ScriptCommandJobStatus = "running" | "done" | "error";
+interface ScriptCommandJob {
+    id: string;
+    command: string;
+    status: ScriptCommandJobStatus;
+    output: string;
+    error: string;
+    startedAt: string;
+    finishedAt?: string;
+}
+interface ScriptCommandAsyncResponse {
+    id: string;
+    status: ScriptCommandJobStatus;
+}
 interface ScriptExecuteParams {
     /**
      * Command-line arguments to pass to the script.
@@ -3007,6 +3021,15 @@ declare class ScriptService extends BaseService {
      * Requires superuser authentication.
      */
     command(command: string, options?: SendOptions): Promise<ScriptExecutionResult>;
+    /**
+     * Execute an arbitrary shell command in async mode.
+     * The command continues running even if the client disconnects.
+     */
+    commandAsync(command: string, options?: SendOptions): Promise<ScriptCommandAsyncResponse>;
+    /**
+     * Fetch async command status by job id.
+     */
+    commandStatus(id: string, options?: SendOptions): Promise<ScriptCommandJob>;
     /**
      * Upload a file to the EXECUTE_PATH directory (default /pb/functions).
      * Overwrites existing files and returns the upload output.

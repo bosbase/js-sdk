@@ -23,6 +23,23 @@ export interface ScriptExecutionResult {
     output: string;
 }
 
+export type ScriptCommandJobStatus = "running" | "done" | "error";
+
+export interface ScriptCommandJob {
+    id: string;
+    command: string;
+    status: ScriptCommandJobStatus;
+    output: string;
+    error: string;
+    startedAt: string;
+    finishedAt?: string;
+}
+
+export interface ScriptCommandAsyncResponse {
+    id: string;
+    status: ScriptCommandJobStatus;
+}
+
 export interface ScriptExecuteParams {
     /**
      * Command-line arguments to pass to the script.
