@@ -12,6 +12,8 @@ import {
     ScriptUpdate,
     ScriptUploadParams,
     ScriptUploadResult,
+    ScriptWasmAsyncResponse,
+    ScriptWasmJob,
     ScriptWasmParams,
 } from "@/tools/script-types";
 
@@ -319,6 +321,49 @@ export class ScriptService extends BaseService {
             method: "POST",
             body,
             ...requestOptions,
+        });
+    }
+
+    /**
+     * Execute a WASM file asynchronously.
+     * The execution continues on the server even if the client disconnects.
+     */
+    async wasmAsync(
+        cliOptions: string,
+        wasmName: string,
+        params?: string,
+        requestOptions?: SendOptions,
+    ): Promise<ScriptWasmAsyncResponse> {
+        const trimmedName = wasmName?.trim();
+        if (!trimmedName) {
+            throw new Error("wasm name is required");
+        }
+
+        const body: ScriptWasmParams = {
+            options: cliOptions?.trim() || "",
+            wasm: trimmedName,
+            params: params?.trim() || "",
+        };
+
+        return this.client.send<ScriptWasmAsyncResponse>(`${this.basePath}/wasm/async`, {
+            method: "POST",
+            body,
+            ...requestOptions,
+        });
+    }
+
+    /**
+     * Fetch async WASM execution status by job id.
+     */
+    async wasmAsyncStatus(id: string, options?: SendOptions): Promise<ScriptWasmJob> {
+        const trimmed = id?.trim();
+        if (!trimmed) {
+            throw new Error("wasm execution job id is required");
+        }
+
+        return this.client.send<ScriptWasmJob>(`${this.basePath}/wasm/async/${encodeURIComponent(trimmed)}`, {
+            method: "GET",
+            ...options,
         });
     }
 

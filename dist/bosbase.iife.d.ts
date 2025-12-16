@@ -2943,6 +2943,9 @@ interface ScriptUpdate {
 }
 interface ScriptExecutionResult {
     output: string;
+    stdout?: string;
+    stderr?: string;
+    duration?: string;
 }
 type ScriptExecuteJobStatus = "running" | "done" | "error";
 interface ScriptExecuteJob {
@@ -2955,6 +2958,22 @@ interface ScriptExecuteJob {
     finishedAt?: string;
 }
 interface ScriptExecuteAsyncResponse {
+    id: string;
+    status: ScriptExecuteJobStatus;
+}
+interface ScriptWasmJob {
+    id: string;
+    wasmName: string;
+    status: ScriptExecuteJobStatus;
+    output: string;
+    stdout: string;
+    stderr: string;
+    error: string;
+    duration: string;
+    startedAt: string;
+    finishedAt?: string;
+}
+interface ScriptWasmAsyncResponse {
     id: string;
     status: ScriptExecuteJobStatus;
 }
@@ -3095,6 +3114,15 @@ declare class ScriptService extends BaseService {
      * Default permission is superuser-only when no entry exists.
      */
     wasm(cliOptions: string, wasmName: string, params?: string, requestOptions?: SendOptions): Promise<ScriptExecutionResult>;
+    /**
+     * Execute a WASM file asynchronously.
+     * The execution continues on the server even if the client disconnects.
+     */
+    wasmAsync(cliOptions: string, wasmName: string, params?: string, requestOptions?: SendOptions): Promise<ScriptWasmAsyncResponse>;
+    /**
+     * Fetch async WASM execution status by job id.
+     */
+    wasmAsyncStatus(id: string, options?: SendOptions): Promise<ScriptWasmJob>;
     /**
      * Delete a script by its name.
      *

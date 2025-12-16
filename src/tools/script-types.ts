@@ -21,6 +21,9 @@ export interface ScriptUpdate {
 
 export interface ScriptExecutionResult {
     output: string;
+    stdout?: string;
+    stderr?: string;
+    duration?: string;
 }
 
 export type ScriptExecuteJobStatus = "running" | "done" | "error";
@@ -36,6 +39,24 @@ export interface ScriptExecuteJob {
 }
 
 export interface ScriptExecuteAsyncResponse {
+    id: string;
+    status: ScriptExecuteJobStatus;
+}
+
+export interface ScriptWasmJob {
+    id: string;
+    wasmName: string;
+    status: ScriptExecuteJobStatus;
+    output: string;
+    stdout: string;
+    stderr: string;
+    error: string;
+    duration: string;
+    startedAt: string;
+    finishedAt?: string;
+}
+
+export interface ScriptWasmAsyncResponse {
     id: string;
     status: ScriptExecuteJobStatus;
 }

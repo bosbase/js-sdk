@@ -165,6 +165,49 @@ describe("ScriptService", function () {
         assert.equal(result.output, "command-ok");
     });
 
+    test("wasmAsync() starts an async wasm job", async function () {
+        fetchMock.on({
+            method: "POST",
+            url: service.client.buildURL("/api/scripts/wasm/async"),
+            replyCode: 202,
+            replyBody: { id: "job123", status: "running" },
+            additionalMatcher: (_, config) => {
+                const body = parseBody(config);
+                return body?.wasm === "demo.wasm" && body?.options === "--reactor" && body?.params === "fib 5";
+            },
+        });
+
+        const result = await service.wasmAsync("--reactor", "demo.wasm", "fib 5");
+
+        assert.equal(result.id, "job123");
+        assert.equal(result.status, "running");
+    });
+
+    test("wasmAsyncStatus() fetches wasm job status", async function () {
+        fetchMock.on({
+            method: "GET",
+            url: service.client.buildURL("/api/scripts/wasm/async/job123"),
+            replyCode: 200,
+            replyBody: {
+                id: "job123",
+                wasmName: "demo.wasm",
+                status: "done",
+                output: "ok",
+                stdout: "ok",
+                stderr: "",
+                duration: "1s",
+                startedAt: "2024-01-01T00:00:00Z",
+                finishedAt: "2024-01-01T00:00:01Z",
+            },
+        });
+
+        const status = await service.wasmAsyncStatus("job123");
+
+        assert.equal(status.id, "job123");
+        assert.equal(status.status, "done");
+        assert.equal(status.output, "ok");
+    });
+
     test("execute() calls the execute endpoint", async function () {
         fetchMock.on({
             method: "POST",

@@ -225,6 +225,54 @@ Notes for `wasm`:
 - Commands run in `EXECUTE_PATH` (env/Docker Compose, default `/pb/functions`) with that directory added to `PATH`.
 - Options and params are concatenated into `wasmedge <options> <wasm> <params>`; output combines stdout/stderr.
 
+### Run WASM asynchronously
+
+Kick off a WASM call that keeps running even if the client disconnects (e.g., flaky network). Poll for completion using the returned job id.
+
+```javascript
+const start = await pb.scripts.wasmAsync("--reactor", "fibonacci.wasm", "fib 35");
+// Later: check status
+const status = await pb.scripts.wasmAsyncStatus(start.id);
+console.log(status.status); // "running" | "done" | "error"
+console.log(status.output); // combined stdout/stderr or function return values
+console.log(status.duration); // execution duration string
+```
+
+Example: start and poll until completion
+
+```javascript
+const { id } = await pb.scripts.wasmAsync("--reactor", "fibonacci.wasm", "fib 35");
+
+async function waitForJob(jobId, intervalMs = 500) {
+    for (;;) {
+        const job = await pb.scripts.wasmAsyncStatus(jobId);
+        if (job.status === "running") {
+            await new Promise((r) => setTimeout(r, intervalMs));
+            continue;
+        }
+        return job;
+    }
+}
+
+const done = await waitForJob(id);
+if (done.status === "done") {
+    console.log("WASM output:", done.output);
+} else {
+    console.error("WASM failed:", done.error);
+}
+```
+
+Notes for `wasmAsync`:
+- Same permission rules as `wasm`; execution continues server-side if the client drops.
+- `wasmAsyncStatus` returns stdout/stderr, combined output, duration, and any error once finished.
+- Status response shape:
+  - `status`: `"running" | "done" | "error"`
+  - `output`: combined stdout + stderr (or return values if no output captured)
+  - `stdout` / `stderr`: raw streams from WASM
+  - `duration`: string duration measured server-side
+  - `startedAt` / `finishedAt`: RFC3339 timestamps
+  - `error`: populated when `status === "error"`
+
 ## Managing Script Permissions
 
 Superusers can define who may execute a script using `pb.scriptsPermissions`.
