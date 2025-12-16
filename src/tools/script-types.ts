@@ -23,6 +23,23 @@ export interface ScriptExecutionResult {
     output: string;
 }
 
+export type ScriptExecuteJobStatus = "running" | "done" | "error";
+
+export interface ScriptExecuteJob {
+    id: string;
+    scriptName: string;
+    status: ScriptExecuteJobStatus;
+    output: string;
+    error: string;
+    startedAt: string;
+    finishedAt?: string;
+}
+
+export interface ScriptExecuteAsyncResponse {
+    id: string;
+    status: ScriptExecuteJobStatus;
+}
+
 export type ScriptCommandJobStatus = "running" | "done" | "error";
 
 export interface ScriptCommandJob {

@@ -103,6 +103,36 @@ const result = await pb.scripts.execute("add.py", ["10", "20"]);
 console.log(result.output); // console output from the python script
 ```
 
+## Executing Scripts Asynchronously
+
+Use `pb.scripts.executeAsync` to start an execution run and receive a job id immediately (HTTP 202).
+You can then poll the status using `pb.scripts.executeAsyncStatus`.
+
+The execution continues running even if the client disconnects due to network issues.
+
+```javascript
+const started = await pb.scripts.executeAsync("long-task.py", {
+    arguments: ["10", "20"],
+    function_name: "main",
+});
+
+console.log(started.id); // job id
+console.log(started.status); // "running"
+
+// poll status
+let job;
+do {
+    job = await pb.scripts.executeAsyncStatus(started.id);
+    await new Promise((r) => setTimeout(r, 500));
+} while (job.status === "running");
+
+if (job.status === "done") {
+    console.log(job.output);
+} else {
+    console.error(job.error);
+}
+```
+
 ## Managing Script Permissions
 
 Use `pb.scriptsPermissions` to control who can call `/api/scripts/{name}/execute`.

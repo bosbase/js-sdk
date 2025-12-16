@@ -4,6 +4,8 @@ import {
     ScriptCreate,
     ScriptCommandAsyncResponse,
     ScriptCommandJob,
+    ScriptExecuteAsyncResponse,
+    ScriptExecuteJob,
     ScriptExecuteParams,
     ScriptExecutionResult,
     ScriptRecord,
@@ -240,6 +242,54 @@ export class ScriptService extends BaseService {
                 ...sendOptions,
             },
         );
+    }
+
+    /**
+     * Execute a stored script asynchronously.
+     * The script continues running even if the client disconnects.
+     */
+    async executeAsync(
+        name: string,
+        params?: ScriptExecuteParams,
+        options?: SendOptions,
+    ): Promise<ScriptExecuteAsyncResponse> {
+        this.requireSuperuser();
+
+        const trimmedName = name?.trim();
+        if (!trimmedName) {
+            throw new Error("script name is required");
+        }
+
+        let body: ScriptExecuteParams | undefined = params;
+        if (body?.arguments) {
+            body.arguments = body.arguments.map((arg) => (typeof arg === "string" ? arg : String(arg)));
+        }
+
+        return this.client.send<ScriptExecuteAsyncResponse>(
+            `${this.basePath}/async/${encodeURIComponent(trimmedName)}/execute`,
+            {
+                method: "POST",
+                ...(body ? { body } : {}),
+                ...options,
+            },
+        );
+    }
+
+    /**
+     * Fetch async script execution status by job id.
+     */
+    async executeAsyncStatus(id: string, options?: SendOptions): Promise<ScriptExecuteJob> {
+        this.requireSuperuser();
+
+        const trimmed = id?.trim();
+        if (!trimmed) {
+            throw new Error("execution job id is required");
+        }
+
+        return this.client.send<ScriptExecuteJob>(`${this.basePath}/async/${encodeURIComponent(trimmed)}`, {
+            method: "GET",
+            ...options,
+        });
     }
 
     /**

@@ -2944,6 +2944,20 @@ interface ScriptUpdate {
 interface ScriptExecutionResult {
     output: string;
 }
+type ScriptExecuteJobStatus = "running" | "done" | "error";
+interface ScriptExecuteJob {
+    id: string;
+    scriptName: string;
+    status: ScriptExecuteJobStatus;
+    output: string;
+    error: string;
+    startedAt: string;
+    finishedAt?: string;
+}
+interface ScriptExecuteAsyncResponse {
+    id: string;
+    status: ScriptExecuteJobStatus;
+}
 type ScriptCommandJobStatus = "running" | "done" | "error";
 interface ScriptCommandJob {
     id: string;
@@ -3065,6 +3079,15 @@ declare class ScriptService extends BaseService {
      * Requires superuser authentication.
      */
     execute(name: string, paramsOrArgs?: ScriptExecuteParams | Array<string> | SendOptions, options?: SendOptions): Promise<ScriptExecutionResult>;
+    /**
+     * Execute a stored script asynchronously.
+     * The script continues running even if the client disconnects.
+     */
+    executeAsync(name: string, params?: ScriptExecuteParams, options?: SendOptions): Promise<ScriptExecuteAsyncResponse>;
+    /**
+     * Fetch async script execution status by job id.
+     */
+    executeAsyncStatus(id: string, options?: SendOptions): Promise<ScriptExecuteJob>;
     /**
      * Execute a WASM file inside EXECUTE_PATH using wasmedge.
      *

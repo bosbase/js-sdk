@@ -3016,6 +3016,20 @@ interface ScriptUpdate {
 interface ScriptExecutionResult {
     output: string;
 }
+type ScriptExecuteJobStatus = "running" | "done" | "error";
+interface ScriptExecuteJob {
+    id: string;
+    scriptName: string;
+    status: ScriptExecuteJobStatus;
+    output: string;
+    error: string;
+    startedAt: string;
+    finishedAt?: string;
+}
+interface ScriptExecuteAsyncResponse {
+    id: string;
+    status: ScriptExecuteJobStatus;
+}
 type ScriptCommandJobStatus = "running" | "done" | "error";
 interface ScriptCommandJob {
     id: string;
@@ -3142,6 +3156,15 @@ declare class ScriptService extends BaseService {
      * Requires superuser authentication.
      */
     execute(name: string, paramsOrArgs?: ScriptExecuteParams | Array<string> | SendOptions, options?: SendOptions): Promise<ScriptExecutionResult>;
+    /**
+     * Execute a stored script asynchronously.
+     * The script continues running even if the client disconnects.
+     */
+    executeAsync(name: string, params?: ScriptExecuteParams, options?: SendOptions): Promise<ScriptExecuteAsyncResponse>;
+    /**
+     * Fetch async script execution status by job id.
+     */
+    executeAsyncStatus(id: string, options?: SendOptions): Promise<ScriptExecuteJob>;
     /**
      * Execute a WASM file inside EXECUTE_PATH using wasmedge.
      *
@@ -3725,4 +3748,4 @@ declare function getTokenPayload(token: string): {
  * @param [expirationThreshold] Time in seconds that will be subtracted from the token `exp` property.
  */
 declare function isTokenExpired(token: string, expirationThreshold?: number): boolean;
-export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, RealtimeMessage, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, SQLService, ScriptService, ScriptPermissionsService, RedisKeySummary, RedisEntry, RedisListPage, CreateRedisKeyBody, UpdateRedisKeyBody, RedisService, PluginHTTPMethod, PluginSSEMethod, PluginWebSocketMethod, PluginMethod, PluginHTTPMethodInput, PluginSSEMethodInput, PluginWebSocketMethodInput, PluginMethodInput, PluginRequestOptions, PluginSSERequestOptions, PluginWebSocketRequestOptions, PluginService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, SqlTableDefinition, SqlTableImportResult, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse, SQLExecuteRequest, SQLExecuteResponse, ScriptRecord, ScriptCreate, ScriptUpdate, ScriptExecutionResult, ScriptCommandJobStatus, ScriptCommandJob, ScriptCommandAsyncResponse, ScriptExecuteParams, ScriptWasmParams, ScriptUploadParams, ScriptUploadResult, ScriptPermissionRecord, ScriptPermissionCreate, ScriptPermissionUpdate };
+export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, RealtimeMessage, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, SQLService, ScriptService, ScriptPermissionsService, RedisKeySummary, RedisEntry, RedisListPage, CreateRedisKeyBody, UpdateRedisKeyBody, RedisService, PluginHTTPMethod, PluginSSEMethod, PluginWebSocketMethod, PluginMethod, PluginHTTPMethodInput, PluginSSEMethodInput, PluginWebSocketMethodInput, PluginMethodInput, PluginRequestOptions, PluginSSERequestOptions, PluginWebSocketRequestOptions, PluginService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, SqlTableDefinition, SqlTableImportResult, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse, SQLExecuteRequest, SQLExecuteResponse, ScriptRecord, ScriptCreate, ScriptUpdate, ScriptExecutionResult, ScriptExecuteJobStatus, ScriptExecuteJob, ScriptExecuteAsyncResponse, ScriptCommandJobStatus, ScriptCommandJob, ScriptCommandAsyncResponse, ScriptExecuteParams, ScriptWasmParams, ScriptUploadParams, ScriptUploadResult, ScriptPermissionRecord, ScriptPermissionCreate, ScriptPermissionUpdate };
