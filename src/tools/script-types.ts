@@ -90,6 +90,36 @@ export interface ScriptExecuteParams {
     function_name?: string;
 }
 
+export interface ScriptExecuteSSEOptions {
+    /**
+     * Additional headers to send with the EventSource request (where supported).
+     */
+    headers?: Record<string, string>;
+    /**
+     * Additional query parameters to append to the URL.
+     */
+    query?: Record<string, any>;
+    /**
+     * EventSource init options passed to the constructor.
+     */
+    eventSourceInit?: EventSourceInit;
+}
+
+export interface ScriptExecuteWebSocketOptions {
+    /**
+     * Additional headers to send with the websocket upgrade (where supported).
+     */
+    headers?: Record<string, string>;
+    /**
+     * Additional query parameters to append to the URL.
+     */
+    query?: Record<string, any>;
+    /**
+     * Optional websocket subprotocols.
+     */
+    websocketProtocols?: string | string[];
+}
+
 export interface ScriptWasmParams {
     options?: string;
     wasm: string;

@@ -3002,6 +3002,34 @@ interface ScriptExecuteParams {
      */
     function_name?: string;
 }
+interface ScriptExecuteSSEOptions {
+    /**
+     * Additional headers to send with the EventSource request (where supported).
+     */
+    headers?: Record<string, string>;
+    /**
+     * Additional query parameters to append to the URL.
+     */
+    query?: Record<string, any>;
+    /**
+     * EventSource init options passed to the constructor.
+     */
+    eventSourceInit?: EventSourceInit;
+}
+interface ScriptExecuteWebSocketOptions {
+    /**
+     * Additional headers to send with the websocket upgrade (where supported).
+     */
+    headers?: Record<string, string>;
+    /**
+     * Additional query parameters to append to the URL.
+     */
+    query?: Record<string, any>;
+    /**
+     * Optional websocket subprotocols.
+     */
+    websocketProtocols?: string | string[];
+}
 interface ScriptUploadParams {
     /**
      * File content to upload (Blob/File or React Native file object).
@@ -3099,6 +3127,20 @@ declare class ScriptService extends BaseService {
      */
     execute(name: string, paramsOrArgs?: ScriptExecuteParams | Array<string> | SendOptions, options?: SendOptions): Promise<ScriptExecutionResult>;
     /**
+     * Execute a stored script and stream the result over Server-Sent Events.
+     *
+     * The response sends a single SSE message with the JSON payload `{ output: string }`.
+     */
+    executeSSE(name: string, params?: ScriptExecuteParams, options?: ScriptExecuteSSEOptions): EventSource;
+    /**
+     * Execute a stored script over WebSocket.
+     *
+     * The server will execute immediately using query params if provided.
+     * If no args/function name are passed, it will wait for the first text/binary
+     * message containing the JSON payload `{ arguments?: [], function_name?: string }`.
+     */
+    executeWebSocket(name: string, params?: ScriptExecuteParams, options?: ScriptExecuteWebSocketOptions): WebSocket;
+    /**
      * Execute a stored script asynchronously.
      * The script continues running even if the client disconnects.
      */
@@ -3131,6 +3173,7 @@ declare class ScriptService extends BaseService {
     delete(name: string, options?: SendOptions): Promise<boolean>;
     private prepareUploadBody;
     private requireSuperuser;
+    private buildExecuteURL;
 }
 declare class ScriptPermissionsService extends BaseService {
     private readonly basePath;

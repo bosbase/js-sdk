@@ -133,6 +133,60 @@ if (job.status === "done") {
 }
 ```
 
+## Streaming Execution (SSE)
+
+Use `pb.scripts.executeSSE` to run a script and receive the output via a single Server-Sent Event. Query parameters mirror the HTTP execute payload: `arguments` and `function_name`.
+
+```javascript
+// In browsers or any environment with EventSource
+const es = pb.scripts.executeSSE("add", { arguments: ["10", "20"] });
+
+es.addEventListener("message", (ev) => {
+    const payload = JSON.parse(ev.data);
+    console.log(payload.output); // "doc execution success updated 10 20"
+    es.close();
+});
+
+es.addEventListener("error", (err) => {
+    console.error("SSE error", err);
+    es.close();
+});
+```
+
+Options:
+- `headers`: optional headers for the SSE request (where supported).
+- `query`: extra query params to append.
+- `eventSourceInit`: passed to the `EventSource` constructor.
+
+> If `EventSource` is not available (for example in some Node runtimes), this helper will throw.
+
+## WebSocket Execution
+
+Use `pb.scripts.executeWebSocket` to execute a script over WebSocket. You can pass `arguments`/`function_name` via query params, or omit them and send a JSON message after connect:
+
+```javascript
+// Execute immediately using query params
+const ws = pb.scripts.executeWebSocket("add", { arguments: ["1", "2"] });
+
+ws.onmessage = (event) => {
+    const payload = JSON.parse(typeof event.data === "string" ? event.data : String(event.data || ""));
+    console.log(payload.output); // "doc execution success updated 1 2"
+    ws.close();
+};
+
+ws.onerror = (err) => {
+    console.error("WS error", err);
+    ws.close();
+};
+```
+
+Options:
+- `headers`: optional headers for the websocket upgrade (where supported).
+- `query`: extra query params to append.
+- `websocketProtocols`: optional subprotocols array/string.
+
+> If `WebSocket` is not available in the runtime, this helper will throw.
+
 ## Managing Script Permissions
 
 Use `pb.scriptsPermissions` to control who can call `/api/scripts/{name}/execute`.

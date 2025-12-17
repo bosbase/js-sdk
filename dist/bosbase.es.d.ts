@@ -3074,6 +3074,34 @@ interface ScriptExecuteParams {
      */
     function_name?: string;
 }
+interface ScriptExecuteSSEOptions {
+    /**
+     * Additional headers to send with the EventSource request (where supported).
+     */
+    headers?: Record<string, string>;
+    /**
+     * Additional query parameters to append to the URL.
+     */
+    query?: Record<string, any>;
+    /**
+     * EventSource init options passed to the constructor.
+     */
+    eventSourceInit?: EventSourceInit;
+}
+interface ScriptExecuteWebSocketOptions {
+    /**
+     * Additional headers to send with the websocket upgrade (where supported).
+     */
+    headers?: Record<string, string>;
+    /**
+     * Additional query parameters to append to the URL.
+     */
+    query?: Record<string, any>;
+    /**
+     * Optional websocket subprotocols.
+     */
+    websocketProtocols?: string | string[];
+}
 interface ScriptWasmParams {
     options?: string;
     wasm: string;
@@ -3176,6 +3204,20 @@ declare class ScriptService extends BaseService {
      */
     execute(name: string, paramsOrArgs?: ScriptExecuteParams | Array<string> | SendOptions, options?: SendOptions): Promise<ScriptExecutionResult>;
     /**
+     * Execute a stored script and stream the result over Server-Sent Events.
+     *
+     * The response sends a single SSE message with the JSON payload `{ output: string }`.
+     */
+    executeSSE(name: string, params?: ScriptExecuteParams, options?: ScriptExecuteSSEOptions): EventSource;
+    /**
+     * Execute a stored script over WebSocket.
+     *
+     * The server will execute immediately using query params if provided.
+     * If no args/function name are passed, it will wait for the first text/binary
+     * message containing the JSON payload `{ arguments?: [], function_name?: string }`.
+     */
+    executeWebSocket(name: string, params?: ScriptExecuteParams, options?: ScriptExecuteWebSocketOptions): WebSocket;
+    /**
      * Execute a stored script asynchronously.
      * The script continues running even if the client disconnects.
      */
@@ -3208,6 +3250,7 @@ declare class ScriptService extends BaseService {
     delete(name: string, options?: SendOptions): Promise<boolean>;
     private prepareUploadBody;
     private requireSuperuser;
+    private buildExecuteURL;
 }
 declare class ScriptPermissionsService extends BaseService {
     private readonly basePath;
@@ -3776,4 +3819,4 @@ declare function getTokenPayload(token: string): {
  * @param [expirationThreshold] Time in seconds that will be subtracted from the token `exp` property.
  */
 declare function isTokenExpired(token: string, expirationThreshold?: number): boolean;
-export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, RealtimeMessage, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, SQLService, ScriptService, ScriptPermissionsService, RedisKeySummary, RedisEntry, RedisListPage, CreateRedisKeyBody, UpdateRedisKeyBody, RedisService, PluginHTTPMethod, PluginSSEMethod, PluginWebSocketMethod, PluginMethod, PluginHTTPMethodInput, PluginSSEMethodInput, PluginWebSocketMethodInput, PluginMethodInput, PluginRequestOptions, PluginSSERequestOptions, PluginWebSocketRequestOptions, PluginService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, SqlTableDefinition, SqlTableImportResult, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse, SQLExecuteRequest, SQLExecuteResponse, ScriptRecord, ScriptCreate, ScriptUpdate, ScriptExecutionResult, ScriptExecuteJobStatus, ScriptExecuteJob, ScriptExecuteAsyncResponse, ScriptWasmJob, ScriptWasmAsyncResponse, ScriptCommandJobStatus, ScriptCommandJob, ScriptCommandAsyncResponse, ScriptExecuteParams, ScriptWasmParams, ScriptUploadParams, ScriptUploadResult, ScriptPermissionRecord, ScriptPermissionCreate, ScriptPermissionUpdate };
+export { Client as default, BeforeSendResult, ClientResponseError, CollectionService, HealthCheckResponse, HealthService, HourlyStats, LogService, UnsubscribeFunc, RealtimeService, PubSubMessage, PublishAck, RealtimeMessage, PubSubService, RecordAuthResponse, AuthProviderInfo, AuthMethodsList, RecordSubscription, OAuth2UrlCallback, OAuth2AuthConfig, OTPResponse, RecordService, CrudService, BatchRequest, BatchRequestResult, BatchService, SubBatchService, VectorServiceOptions, VectorService, LLMServiceOptions, LLMDocumentService, LangChaingoService, CacheConfigSummary, CacheEntry, CreateCacheBody, UpdateCacheBody, CacheEntryBody, CacheService, GraphQLResponse, GraphQLRequestOptions, GraphQLService, SQLService, ScriptService, ScriptPermissionsService, RedisKeySummary, RedisEntry, RedisListPage, CreateRedisKeyBody, UpdateRedisKeyBody, RedisService, PluginHTTPMethod, PluginSSEMethod, PluginWebSocketMethod, PluginMethod, PluginHTTPMethodInput, PluginSSEMethodInput, PluginWebSocketMethodInput, PluginMethodInput, PluginRequestOptions, PluginSSERequestOptions, PluginWebSocketRequestOptions, PluginService, AsyncSaveFunc, AsyncClearFunc, AsyncAuthStore, AuthRecord, AuthModel, OnStoreChangeFunc, BaseAuthStore, LocalAuthStore, ListResult, BaseModel, LogModel, RecordModel, CollectionField, TokenConfig, AuthAlertConfig, OTPConfig, MFAConfig, PasswordAuthConfig, OAuth2Provider, OAuth2Config, EmailTemplate, BaseCollectionModel, ViewCollectionModel, AuthCollectionModel, CollectionModel, SqlTableDefinition, SqlTableImportResult, CollectionFieldSchemaInfo, CollectionSchemaInfo, SendOptions, CommonOptions, ListOptions, FullListOptions, RecordOptions, RecordListOptions, RecordFullListOptions, RecordSubscribeOptions, LogStatsOptions, FileOptions, AuthOptions, normalizeUnknownQueryParams, serializeQueryParams, ParseOptions, cookieParse, SerializeOptions, cookieSerialize, getTokenPayload, isTokenExpired, VectorEmbedding, VectorMetadata, VectorDocument, VectorSearchResult, VectorSearchOptions, VectorBatchInsertOptions, VectorSearchResponse, VectorInsertResponse, VectorBatchInsertResponse, VectorProvider, VectorConfig, LLMDocument, LLMDocumentUpdate, LLMQueryOptions, LLMQueryResult, LangChaingoModelConfig, LangChaingoCompletionMessage, LangChaingoCompletionRequest, LangChaingoFunctionCall, LangChaingoToolCall, LangChaingoCompletionResponse, LangChaingoRAGFilters, LangChaingoRAGRequest, LangChaingoSourceDocument, LangChaingoRAGResponse, LangChaingoDocumentQueryRequest, LangChaingoDocumentQueryResponse, LangChaingoSQLRequest, LangChaingoSQLResponse, SQLExecuteRequest, SQLExecuteResponse, ScriptRecord, ScriptCreate, ScriptUpdate, ScriptExecutionResult, ScriptExecuteJobStatus, ScriptExecuteJob, ScriptExecuteAsyncResponse, ScriptWasmJob, ScriptWasmAsyncResponse, ScriptCommandJobStatus, ScriptCommandJob, ScriptCommandAsyncResponse, ScriptExecuteParams, ScriptExecuteSSEOptions, ScriptExecuteWebSocketOptions, ScriptWasmParams, ScriptUploadParams, ScriptUploadResult, ScriptPermissionRecord, ScriptPermissionCreate, ScriptPermissionUpdate };

@@ -1,5 +1,5 @@
 import { BaseService } from "@/services/BaseService";
-import { SendOptions } from "@/tools/options";
+import { SendOptions, serializeQueryParams } from "@/tools/options";
 import {
     ScriptCreate,
     ScriptCommandAsyncResponse,
@@ -7,6 +7,8 @@ import {
     ScriptExecuteAsyncResponse,
     ScriptExecuteJob,
     ScriptExecuteParams,
+    ScriptExecuteSSEOptions,
+    ScriptExecuteWebSocketOptions,
     ScriptExecutionResult,
     ScriptRecord,
     ScriptUpdate,
@@ -247,6 +249,105 @@ export class ScriptService extends BaseService {
     }
 
     /**
+     * Execute a stored script and stream the result over Server-Sent Events.
+     *
+     * The response sends a single SSE message with the JSON payload `{ output: string }`.
+     */
+    executeSSE(
+        name: string,
+        params?: ScriptExecuteParams,
+        options?: ScriptExecuteSSEOptions,
+    ): EventSource {
+        this.requireSuperuser();
+
+        const trimmedName = name?.trim();
+        if (!trimmedName) {
+            throw new Error("script name is required");
+        }
+
+        if (typeof EventSource === "undefined") {
+            throw new Error("EventSource is not available in this runtime environment.");
+        }
+
+        const url = this.buildExecuteURL(
+            `${this.basePath}/${encodeURIComponent(trimmedName)}/execute/sse`,
+            params,
+            options?.query,
+        );
+
+        const init: EventSourceInit & { headers?: Record<string, string> } = {
+            ...(options?.eventSourceInit || {}),
+        };
+
+        if (options?.headers) {
+            init.headers = options.headers;
+        }
+
+        return new EventSource(url, init);
+    }
+
+    /**
+     * Execute a stored script over WebSocket.
+     *
+     * The server will execute immediately using query params if provided.
+     * If no args/function name are passed, it will wait for the first text/binary
+     * message containing the JSON payload `{ arguments?: [], function_name?: string }`.
+     */
+    executeWebSocket(
+        name: string,
+        params?: ScriptExecuteParams,
+        options?: ScriptExecuteWebSocketOptions,
+    ): WebSocket {
+        this.requireSuperuser();
+
+        const trimmedName = name?.trim();
+        if (!trimmedName) {
+            throw new Error("script name is required");
+        }
+
+        if (typeof WebSocket === "undefined") {
+            throw new Error("WebSocket is not available in this runtime environment.");
+        }
+
+        const url = this.buildExecuteURL(
+            `${this.basePath}/${encodeURIComponent(trimmedName)}/execute/ws`,
+            params,
+            options?.query,
+        );
+
+        let wsUrl: URL;
+        try {
+            wsUrl = new URL(
+                url,
+                typeof window !== "undefined" ? window.location.href : "http://localhost",
+            );
+        } catch {
+            wsUrl = new URL("http://localhost");
+        }
+
+        if (wsUrl.protocol === "https:") {
+            wsUrl.protocol = "wss:";
+        } else if (wsUrl.protocol === "http:") {
+            wsUrl.protocol = "ws:";
+        } else if (!wsUrl.protocol || wsUrl.protocol === ":") {
+            wsUrl.protocol = "ws:";
+        }
+
+        const ctor: any = WebSocket as any;
+        const protocols = options?.websocketProtocols;
+
+        if (options?.headers) {
+            try {
+                return new ctor(wsUrl.toString(), protocols, { headers: options.headers });
+            } catch (_) {
+                // fall through to native constructor below
+            }
+        }
+
+        return new ctor(wsUrl.toString(), protocols);
+    }
+
+    /**
      * Execute a stored script asynchronously.
      * The script continues running even if the client disconnects.
      */
@@ -439,5 +540,35 @@ export class ScriptService extends BaseService {
         if (!this.client.authStore.isSuperuser) {
             throw new Error("Superuser authentication is required to manage scripts");
         }
+    }
+
+    private buildExecuteURL(
+        path: string,
+        params?: ScriptExecuteParams,
+        extraQuery?: Record<string, any>,
+    ): string {
+        const query: Record<string, any> = { ...(extraQuery || {}) };
+
+        if (params?.arguments?.length) {
+            query.arguments = params.arguments.map((arg) =>
+                typeof arg === "string" ? arg : String(arg),
+            );
+        }
+        if (params?.function_name) {
+            query.function_name = params.function_name;
+        }
+
+        // allow auth via query token for runtimes that cannot set headers (eg. native EventSource)
+        if (this.client.authStore.token) {
+            query.token = this.client.authStore.token;
+        }
+
+        let url = this.client.buildURL(path);
+        const queryString = serializeQueryParams(query);
+        if (queryString) {
+            url += (url.includes("?") ? "&" : "?") + queryString;
+        }
+
+        return url;
     }
 }
